@@ -956,8 +956,12 @@ class LivingLifePage : public GamePage, public ActionListener {
         void endExtraObjectMove( int inExtraIndex );
 
 		
-		// FOVMOD NOTE:  Change 3/3 - Take these changes during the merge process
-		void changeHUDFOV(float newScale = 1.0f);
+        char mUsingSteam;
+        char mZKeyDown;
+
+        
+        // FOVMOD NOTE:  Change 1/1 - Take these changes during the merge process
+        void changeHUDFOV(float newScale = 1.0f);
 
 		// NAMEMOD NOTE:  Change 2/2 - Take these lines during the merge process
         const char *findRandomFirstName( char *inString );

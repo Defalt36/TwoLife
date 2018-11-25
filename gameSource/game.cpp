@@ -2788,8 +2788,55 @@ void pointerMove( float inX, float inY ) {
 
 
 
+// controller support:
+void joyButtonDown(int button) {    
+    if (isPaused()) 
+        return;
+    if (currentGamePage != NULL)
+        currentGamePage->joyButtonDown(button);
+}
+void joyButtonUp(int button) {
+    if (isPaused()) 
+        return;
+    if (currentGamePage != NULL)
+        currentGamePage->joyButtonUp(button);
+}
+void joyDPadDown(int dir) {
+    if (isPaused()) 
+        return;
+    if (currentGamePage != NULL)
+        currentGamePage->joyDPadDown(dir);
+}
+void joyDPadUp(void) {
+    if (isPaused()) 
+        return;
+    if (currentGamePage != NULL)
+        currentGamePage->joyDPadUp();
+}
+void joyRudder(int rudder, short pressure) {
+    if (isPaused()) 
+        return;
+    if (currentGamePage != NULL)
+        currentGamePage->joyRudder(rudder, pressure);
+}
+void joyThumbstick(int stick, short x, short y) {
+    if (isPaused()) 
+        return;
+    if (currentGamePage != NULL)
+        currentGamePage->joyThumbstick(stick, x, y);
+}
+void getScreenCenterPlayerOffset(int* X, int* Y) {
+    if (currentGamePage != NULL) {
+        currentGamePage->getScreenCenterPlayerOffset(X, Y);
+    } else {
+        *X = 0;
+        *Y = 0;
+    }
+}
+
 
 void pointerDown( float inX, float inY ) {
+
     if( isPaused() ) {
         return;
         }
@@ -2948,6 +2995,7 @@ void keyDown( unsigned char inASCII ) {
 
 
 void keyUp( unsigned char inASCII ) {
+
     if( inASCII == 127 || inASCII == 8 ) {
         // delete no longer held
         // even if pause screen no longer up, pay attention to this

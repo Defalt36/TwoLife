@@ -13,6 +13,17 @@ class GamePage : public PageComponent {
 
     public:
         
+        // controller support:
+        virtual void joyButtonDown(int button) {}
+        virtual void joyButtonUp(int button) {}
+        virtual void joyDPadDown(int dir) {}
+        virtual void joyDPadUp(void) {}
+        virtual void joyRudder(int rudder, short pressure) {}
+        virtual void joyThumbstick(int stick, short x, short y) {}
+        virtual void getScreenCenterPlayerOffset(int* X, int* Y) {
+            *X = 0;
+            *Y = 0;
+        }
 
         virtual ~GamePage();
         

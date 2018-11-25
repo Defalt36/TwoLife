@@ -231,7 +231,6 @@ static int mouseDownFrames = 0;
 
 static int minMouseDownFrames = 30;
 
-
 static int screenCenterPlayerOffsetX, screenCenterPlayerOffsetY;
 
 
@@ -15112,6 +15111,8 @@ void LivingLifePage::step() {
     
     double pageLifeTime = game_getCurrentTime() - mPageStartTime;
 
+    joyStep(); // controller support.
+
     if( mServerSocket == -1 ) {
         serverSocketConnected = false;
         connectionMessageFade = 1.0f;
@@ -24717,12 +24718,6 @@ void LivingLifePage::makeActive( char inFresh ) {
         }
     }
 
-
-
-
-
-
-
 void LivingLifePage::checkForPointerHit( PointerHitRecord *inRecord,
                                          float inX, float inY ) {
     
@@ -25618,7 +25613,7 @@ char LivingLifePage::getCellBlocksWalking( int inMapX, int inMapY ) {
     }
 
 
-
+#include "joyMod.cpp" // controller support.
 
 
 static int savedXD = 0;
@@ -25720,6 +25715,9 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         !isLastMouseButtonRight() &&
         minitech::livingLifePageMouseDown( inX, inY )) return;
     
+
+    fprintf(stderr, "----------Down> %f, %f\n", inX, inY); // debugging controller support.
+
     lastMouseX = inX;
     lastMouseY = inY;
 
@@ -27606,6 +27604,9 @@ void LivingLifePage::pointerDrag( float inX, float inY ) {
 
 
 void LivingLifePage::pointerUp( float inX, float inY ) {
+
+    fprintf(stderr, "------------Up> %f, %f\n", inX, inY); // debugging controller support.
+
     lastMouseX = inX;
     lastMouseY = inY;
 

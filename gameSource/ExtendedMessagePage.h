@@ -28,6 +28,8 @@ class ExtendedMessagePage : public GamePage, public ActionListener {
 
         virtual void draw( doublePair inViewCenter, 
                            double inViewSize );
+
+        virtual void joyButtonUp(int button); // controller support.
         
     protected:
         

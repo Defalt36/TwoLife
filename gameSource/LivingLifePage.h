@@ -961,7 +961,10 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         
         // FOVMOD NOTE:  Change 1/1 - Take these changes during the merge process
-        void changeHUDFOV(float newScale = 1.0f);
+        void changeHUDFOV( float newScale = 1.0f );
+        void changeFOV( float newScale = 1.0f );
+        void calcOffsetHUD();
+        void calcFontScale( float newScale, Font* font );
 
 		// NAMEMOD NOTE:  Change 2/2 - Take these lines during the merge process
         const char *findRandomFirstName( char *inString );

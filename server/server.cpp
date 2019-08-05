@@ -112,7 +112,7 @@ double startWalkingAge = 0.20;
 
 
 
-double forceDeathAge = 60;
+double forceDeathAge = 120;
 
 
 double minSayGapInSeconds = 1.0;

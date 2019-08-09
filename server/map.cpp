@@ -234,7 +234,7 @@ static char allowSecondPlaceBiomes = false;
 // what human-placed stuff, together, counts as a camp
 static int campRadius = 20;
 
-static float minEveCampRespawnAge = 60.0;
+static float minEveCampRespawnAge = 120.0;
 
 
 static int barrierRadius = 250;
@@ -3337,7 +3337,7 @@ char initMap() {
 
     
     minEveCampRespawnAge = 
-        SettingsManager::getFloatSetting( "minEveCampRespawnAge", 60.0f );
+        SettingsManager::getFloatSetting( "minEveCampRespawnAge", 120.0f );
     
 
     barrierRadius = SettingsManager::getIntSetting( "barrierRadius", 250 );

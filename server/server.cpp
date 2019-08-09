@@ -113,8 +113,11 @@ double startWalkingAge = 0.20;
 
 
 double forceDeathAge = 120;
-
-
+// UncleGus Custom Variables
+double adultAge = 20;
+double oldAge = 104;
+double fertileAge = 14;
+// End UncleGus Custom Variables
 double minSayGapInSeconds = 1.0;
 
 // for emote throttling
@@ -4205,7 +4208,7 @@ char isFertileAge( LiveObject *inPlayer ) {
                     
     char f = getFemale( inPlayer );
                     
-    if( age >= getFirstFertileAge() && age <= 40 && f ) {
+    if( age >= getFirstFertileAge() && age <= oldAge && f ) {
         return true;
         }
     else {
@@ -4221,17 +4224,17 @@ int computeFoodCapacity( LiveObject *inPlayer ) {
     
     int returnVal = 0;
     
-    if( ageInYears < 44 ) {
+    if( ageInYears < oldAge ) {
         
-        if( ageInYears > 16 ) {
-            ageInYears = 16;
+        if( ageInYears > adultAge - 4 ) {
+            ageInYears = adultAge - 4;
             }
         
         returnVal = ageInYears + 4;
         }
     else {
-        // food capacity decreases as we near 60
-        int cap = 60 - ageInYears + 4;
+        // food capacity decreases as we near death
+        int cap = forceDeathAge - ageInYears + 4;
         
         if( cap < 4 ) {
             cap = 4;

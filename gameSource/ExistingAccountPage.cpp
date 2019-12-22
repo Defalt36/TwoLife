@@ -60,7 +60,7 @@ static char *getLineageServerURL() {
 
 ExistingAccountPage::ExistingAccountPage()
         : mEmailField( mainFont, 0, 128, 10, false, 
-                       translate( "email" ),
+                       translate( "USERNAME:" ),
                        NULL,
                        // forbid only spaces and backslash and 
                        // single/double quotes 

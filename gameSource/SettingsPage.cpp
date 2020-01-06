@@ -36,6 +36,7 @@ SettingsPage::SettingsPage()
                                  "", // no label
                                  "0123456789",
                                  NULL ),
+          mEnableNudeBox( -335, 148, 4 ),
           mMusicLoudnessSlider( mainFont, 0, 40, 4, 200, 30,
                                 0.0, 1.0, 
                                 translate( "musicLoudness" ) ),
@@ -102,6 +103,8 @@ SettingsPage::SettingsPage()
     mTargetFrameRateField.addActionListener( this );
     
     mTargetFrameRateField.setFireOnAnyTextChange( true );
+    addComponent( &mEnableNudeBox );
+    mEnableNudeBox.addActionListener( this );
 
     addComponent( &mRestartButton );
     mRestartButton.addActionListener( this );
@@ -145,6 +148,11 @@ SettingsPage::SettingsPage()
         SettingsManager::getIntSetting( "borderless", 0 );
 
     mBorderlessBox.setToggled( mOldBorderlessSetting );
+
+    mEnableNudeSetting =
+        SettingsManager::getIntSetting( "nudeEnabled", 1 );
+
+    mEnableNudeBox.setToggled( mEnableNudeSetting );
     
     
 
@@ -284,6 +292,13 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         SettingsManager::setSetting( "borderless", newSetting );
         
         checkRestartButtonVisibility();
+        }
+	else if( inTarget == &mEnableNudeBox ) {
+        int newSetting = mEnableNudeBox.getToggled();
+        
+        SettingsManager::setSetting( "nudeEnabled", newSetting );
+        
+        mRestartButton.setVisible( mEnableNudeSetting != newSetting );
         }
     else if( inTarget == &mRedetectButton ) {
         // redetect means start from scratch, detect vsync, etc.
@@ -542,6 +557,14 @@ void SettingsPage::draw( doublePair inViewCenter,
     mainFont->drawString( translate( "targetFPS" ), pos, alignRight );
     pos.y += 44;
     mainFont->drawString( translate( "currentFPS" ), pos, alignRight );
+
+
+    pos = mEnableNudeBox.getPosition();
+    
+    pos.x -= 30;
+    pos.y -= 2;
+
+    mainFont->drawString( "Enable Nudity", pos, alignRight );
 
 
     pos = mCursorModeSet->getPosition();

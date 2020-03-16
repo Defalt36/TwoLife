@@ -1189,7 +1189,7 @@ function fs_getClientSequenceNumber() {
     global $tableNamePrefix;
     
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     if( $email == "" ) {
         $rawEmail = $_REQUEST[ "email" ];
@@ -1644,7 +1644,7 @@ function fs_checkAndUpdateServerSeqNumber() {
 function fs_checkAndUpdateClientSeqNumber() {
     global $tableNamePrefix;
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     $trueSeq = fs_checkClientSeqHash( $email );
     
@@ -1866,7 +1866,7 @@ function fs_reportDeath() {
     global $tableNamePrefix;
 
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     if( $email == "" ) {
         echo "DENIED";
@@ -1965,7 +1965,7 @@ function fs_getScore() {
     global $tableNamePrefix;
 
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     if( $email == "" ) {
         echo "DENIED";
@@ -2048,7 +2048,7 @@ function fs_getClientScore() {
     global $tableNamePrefix;
 
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     if( $email == "" ) {
         echo "DENIED";
@@ -2068,7 +2068,7 @@ function fs_getClientScoreDetails() {
     global $tableNamePrefix;
 
 
-    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = fs_requestFilter( "email", "/[A-Z0-9._%+\-]+/i", "" );
 
     if( $email == "" ) {
         echo "DENIED";

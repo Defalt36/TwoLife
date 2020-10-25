@@ -15,6 +15,7 @@ ROOT_PATH = ../..
 
 LAYER_SOURCE = \
 newbieTips.cpp \
+lightning.cpp \
 minitech.cpp \
 game.cpp \
 Background.cpp \

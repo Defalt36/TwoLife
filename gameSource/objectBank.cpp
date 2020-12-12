@@ -3461,9 +3461,9 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
     if( inObject->noFlip ) {
         inFlipH = false;
         }
-		
-	if (HetuwMod::objectDrawScale) inScale = HetuwMod::objectDrawScale[inObject->id];
-
+	
+	if (HetuwMod::objectDrawScale && inScale == 1.0) inScale = HetuwMod::objectDrawScale[inObject->id]; //minitech
+	
     HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
     
     SimpleVector <int> frontArmIndices;

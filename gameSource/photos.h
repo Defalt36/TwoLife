@@ -1,6 +1,7 @@
 #include "minorGems/game/doublePair.h"
 #include "minorGems/util/SimpleVector.h"
 
+void hetuwTakePhoto();
 
 void initPhotos();
 void freePhotos();

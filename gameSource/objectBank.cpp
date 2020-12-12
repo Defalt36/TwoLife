@@ -26,6 +26,7 @@
 
 #include "animationBank.h"
 
+#include "hetuwmod.h"
 
 static int mapSize;
 // maps IDs to records
@@ -3460,6 +3461,8 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
     if( inObject->noFlip ) {
         inFlipH = false;
         }
+		
+	if (HetuwMod::objectDrawScale) inScale = HetuwMod::objectDrawScale[inObject->id];
 
     HoldingPos returnHoldingPos = { false, {0, 0}, 0 };
     
@@ -3703,18 +3706,18 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             if( inClothing.bottom != NULL ) {
                 drawObject( inClothing.bottom, 2, 
                             bottomPos, bottomRot, true,
-                            inFlipH, -1, 0, false, false, emptyClothing );
+                            inFlipH, -1, 0, false, false, emptyClothing, inScale );
                 }
             if( inClothing.tunic != NULL ) {
                 drawObject( inClothing.tunic, 2,
                             tunicPos, tunicRot, true,
-                            inFlipH, -1, 0, false, false, emptyClothing );
+                            inFlipH, -1, 0, false, false, emptyClothing, inScale );
                 }
             if( inClothing.backpack != NULL ) {
                 drawObject( inClothing.backpack, 2, 
                             backpackPos, backpackRot,
                             true,
-                            inFlipH, -1, 0, false, false, emptyClothing );
+                            inFlipH, -1, 0, false, false, emptyClothing, inScale );
                 }
             }
 
@@ -3810,13 +3813,13 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             inClothing.backShoe != NULL && i == backFootIndex ) {
             drawObject( inClothing.backShoe, 2,
                         backShoePos, backShoeRot, true,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+                        inFlipH, -1, 0, false, false, emptyClothing, inScale );
             }
         else if( ! skipSprite &&
                  inClothing.frontShoe != NULL && i == frontFootIndex ) {
             drawObject( inClothing.frontShoe, 2,
                         frontShoePos, frontShoeRot, true,
-                        inFlipH, -1, 0, false, false, emptyClothing );
+                        inFlipH, -1, 0, false, false, emptyClothing, inScale );
             }
 
         }    

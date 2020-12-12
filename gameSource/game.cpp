@@ -101,6 +101,7 @@ CustomRandomSource randSource( 34957197 );
 
 #include "whiteSprites.h"
 
+#include "hetuwmod.h"
 
 // should we pull the map
 static char mapPullMode = 0;
@@ -407,7 +408,16 @@ char *getHashSalt() {
     return stringDuplicate( SETTINGS_HASH_SALT );
     }
 
-
+void hetuwSetViewSize() {
+	viewWidth = HetuwMod::viewWidth;
+	viewHeight = HetuwMod::viewHeight;
+	visibleViewWidth = viewWidth;
+	setViewSize( viewWidth );
+	setLetterbox( visibleViewWidth, viewHeight );
+	if (livingLifePage != NULL) {
+		livingLifePage->hetuwSetPanelOffsets();
+	}
+}
 
 
 void initDrawString( int inWidth, int inHeight ) {
@@ -416,6 +426,9 @@ void initDrawString( int inWidth, int inHeight ) {
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
     toggleTransparentCropping( true );
+	
+	HetuwMod::init();
+	hetuwSetViewSize();
     
     mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
@@ -1101,7 +1114,8 @@ static void startConnecting() {
             }
         serverPort = SettingsManager::getIntSetting( 
             "customServerPort", 8005 );
-
+			
+		HetuwMod::onGotServerAddress(usingCustomServer, serverIP, serverPort);
         printf( "Using custom server address: %s:%d\n", 
                 serverIP, serverPort );
                     
@@ -1195,6 +1209,7 @@ void showReconnectPage() {
 
 void drawFrame( char inUpdate ) {    
 
+	HetuwMod::gameStep();
 
     if( !inUpdate ) {
         
@@ -1762,7 +1777,7 @@ void drawFrame( char inUpdate ) {
                     }
                 else {
                     
-
+					HetuwMod::onGotServerAddress(usingCustomServer, serverIP, serverPort);
                     printf( "Got server address: %s:%d\n", 
                             serverIP, serverPort );
                 

@@ -75,7 +75,6 @@ static SimpleVector<TapoutRecord> tapoutRecords;
 static int maxFoodValue = 0;
 
 
-static SimpleVector<TapoutRecord> tapoutRecords;
 
 
 
@@ -7150,26 +7149,4 @@ int getNextVarSerialNumberChild( ObjectRecord *inO ) {
     int nextDummyIndex = 
         r->numInstancesCreated % parent->numVariableDummyIDs;
 
-TapoutRecord *getTapoutRecord( int inObjectID ) {
-    for( int i=0; i<tapoutRecords.size(); i++ ) {
-        TapoutRecord *r = tapoutRecords.getElement( i );
-        
-        if( r->triggerID == inObjectID ) {
-            return r;
-            }
-        }
-    return NULL;
-    }
-
-
-    r->numInstancesCreated ++;
-    
-    return parent->variableDummyIDs[ nextDummyIndex ];
-    }
-
-void clearTapoutCounts() {
-    for( int i=0; i<tapoutRecords.size(); i++ ) {
-        TapoutRecord *r = tapoutRecords.getElement( i );
-        r->buildCount = 0;
-        }
-    }
+}

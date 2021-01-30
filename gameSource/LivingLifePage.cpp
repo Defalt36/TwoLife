@@ -1286,7 +1286,6 @@ typedef enum messageType {
     PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
     GLOBAL_MESSAGE,
-	FLIP,
     WAR_REPORT,
     LEARNED_TOOL_REPORT,
     TOOL_EXPERTS,
@@ -15583,18 +15582,6 @@ void LivingLifePage::step() {
                                 oldContained.push_back_other( 
                                     &( mMapContainedStacks[mapI] ) );
                                 }
-
-                            SimpleVector<int> oldContained;
-                            // player triggered
-                            // with no changed to container
-                            // look for contained change
-                            if( speed == 0 &&
-                                old == newID && 
-                                responsiblePlayerID < 0 ) {
-                            
-                                oldContained.push_back_other( 
-                                    &( mMapContainedStacks[mapI] ) );
-                                }
                             
                             mMapContainedStacks[mapI].deleteAll();
                             mMapSubContainedStacks[mapI].deleteAll();
@@ -25693,9 +25680,9 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 forceDisconnect = true;
                                 }
                             else if( strstr( typedText,
-                                             translate( "helpCommand" ) ) 
-                                     == typedText ) {
+                                             translate( "helpCommand" ) ) == typedText ) {
                                 showHelp = ! showHelp;
+								 }
                             else if( commandTyped( typedText, 
                                                    "familyCommand" ) ) {
                                 

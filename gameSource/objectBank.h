@@ -431,12 +431,8 @@ typedef struct ObjectRecord {
         char isAutoOrienting;
         char causeAutoOrientHOnly;
         char causeAutoOrientVOnly;
-        int horizontalVersionID;
-        int verticalVersionID;
-        int cornerVersionID;
         
 
-        char isTapOutTrigger;
 
         int toolSetIndex;
         char toolLearned;
@@ -447,9 +443,6 @@ typedef struct ObjectRecord {
         // one entry per biome
         char *permittedBiomeMap;
         
-        char autoDefaultTrans;
-
-        char noBackAccess;
 
         int alcohol;
         

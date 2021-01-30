@@ -67,7 +67,15 @@ typedef struct LiveObject {
 
         char *relationName;
         
+        // -1 war
+        // 0 neutral
+        // 1 peace
+        int warPeaceStatus;
+        
+
         int curseLevel;
+        
+        char *curseName;
         
         int excessCursePoints;
 
@@ -106,11 +114,6 @@ typedef struct LiveObject {
         char lastHeldByRawPosSet;
         doublePair lastHeldByRawPos;
         
-        // track this so that we only send one jump message even if
-        // the player clicks more than once before the server registers the
-        // jump
-        double jumpOutOfArmsSentTime;
-        
         // true if locally-controlled baby is attempting to jump out of arms
         char babyWiggle;
         double babyWiggleProgress;
@@ -130,6 +133,11 @@ typedef struct LiveObject {
 
         double lastFlipSendTime;
         char lastFlipSent;
+        
+
+        // if not learned, held flipped 180 degrees
+        char heldLearned;
+
 
         char heldPosOverride;
         char heldPosOverrideAlmostOver;
@@ -172,6 +180,8 @@ typedef struct LiveObject {
         
 
         float heat;
+        float foodDrainTime;
+        float indoorBonusTime;
         
 
         int numContained;
@@ -233,6 +243,9 @@ typedef struct LiveObject {
         int pathLength;
         GridPos *pathToDest;
 
+        // closest spot on pathToDest to currentPos
+        GridPos closestPathPos;
+        
                 
         int closestDestIfPathFailedX;
         int closestDestIfPathFailedY;
@@ -289,6 +302,10 @@ typedef struct LiveObject {
 
         char speechIsSuccessfulCurse;
         
+        char speechIsCurseTag;
+        double lastCurseTagDisplayTime;
+
+        char speechIsOverheadLabel;
 
         char shouldDrawPathMarks;
         double pathMarkFade;
@@ -305,9 +322,55 @@ typedef struct LiveObject {
         // wall clock time when emot clears
         double emotClearETATime;
 
+        SimpleVector<Emotion*> permanentEmots;
+        
+
         char killMode;
         int killWithID;
+        
+        char chasingUs;
+        
 
+
+        // id of who this player is following, or -1 if following self
+        int followingID;
+        
+        int highestLeaderID;
+
+        // list of other players who have exiled this player
+        SimpleVector<int> exiledByIDs;
+        
+        // how many tiers of people are below this person
+        // 0 if has no followers
+        // 1 if has some followers
+        // 2 if has some leaders as followers
+        // 3 if has some leader-leaders as followers
+        int leadershipLevel;
+        
+        char hasBadge;
+        // color to draw badge
+        FloatColor badgeColor;
+
+        FloatColor personalLeadershipColor;
+        
+
+        // does the local player see this person as exiled?
+        char isExiled;
+
+        // does the local player see this person as dubious?
+        // if they are following someone we see as exiled
+        char isDubious;
+        
+
+        // does local player see this person as a follower?
+        char followingUs;
+        
+        // for mouse over, what this local player sees
+        // in front of this player's name
+        char *leadershipNameTag;
+        
+        char isGeneticFamily;
+        
     } LiveObject;
 
 
@@ -371,6 +434,7 @@ typedef struct PointerHitRecord {
         // true if hitOurPlacement happened THROUGH another non-person object
         char hitOurPlacementBehind;
         
+        int hitObjectID;
 
     } PointerHitRecord;
 
@@ -421,6 +485,13 @@ typedef struct ExtraMapObject {
         
 
 
+typedef struct OldHintArrow {
+        doublePair pos;
+        double bounce;
+        float fade;
+    } OldHintArrow;
+
+
 
 class LivingLifePage : public GamePage, public ActionListener {
         
@@ -432,7 +503,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         void clearMap();
         
         // enabled tutorail next time a connection loads
-        void runTutorial();
+        void runTutorial( int inNumber );
         
 
         char isMapBeingPulled();
@@ -487,7 +558,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         int mRequiredVersion;
 
-        char mForceRunTutorial;
+        int mForceRunTutorial;
         int mTutorialNumber;
 
         char mGlobalMessageShowing;
@@ -614,19 +685,25 @@ class LivingLifePage : public GamePage, public ActionListener {
         SpriteHandle mCellBorderSprite;
         SpriteHandle mCellFillSprite;
         
+        SpriteHandle mHintArrowSprite;
+        
 
         SpriteHandle mHomeSlipSprite;
+        SpriteHandle mHomeSlip2Sprite;
+        
+        SpriteHandle mHomeSlipSprites[2];
+        
         SpriteHandle mHomeArrowSprites[ NUM_HOME_ARROWS ];
         SpriteHandle mHomeArrowErasedSprites[ NUM_HOME_ARROWS ];
 		
 		SpriteHandle sheetSprites[9] = {nullptr};
         
-        HomeArrow mHomeArrowStates[ NUM_HOME_ARROWS ];
+        HomeArrow mHomeArrowStates[2][ NUM_HOME_ARROWS ];
 
         SimpleVector<int> mCulvertStoneSpriteIDs;
         
-        SimpleVector<char*> mPreviousHomeDistStrings;
-        SimpleVector<float> mPreviousHomeDistFades;
+        SimpleVector<char*> mPreviousHomeDistStrings[2];
+        SimpleVector<float> mPreviousHomeDistFades[2];
         
 
         // offset from current view center
@@ -635,9 +712,11 @@ class LivingLifePage : public GamePage, public ActionListener {
         doublePair mNotePaperPosTargetOffset;
 
 
-        doublePair mHomeSlipHideOffset;
-        doublePair mHomeSlipPosOffset;
-        doublePair mHomeSlipPosTargetOffset;
+        doublePair mHomeSlipHideOffset[2];
+        doublePair mHomeSlipPosOffset[2];
+        doublePair mHomeSlipPosTargetOffset[2];
+
+        double mHomeSlipShowDelta[2];
 
         
         SimpleVector<char*> mLastKnownNoteLines;
@@ -689,6 +768,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         doublePair mHintExtraOffset[NUM_HINT_SHEETS];
 
+        double mHintSheetXTweak[NUM_HINT_SHEETS];
+        
+
         // # separates lines
         char *mHintMessage[NUM_HINT_SHEETS];
         int mHintMessageIndex[NUM_HINT_SHEETS];
@@ -704,6 +786,15 @@ class LivingLifePage : public GamePage, public ActionListener {
         int mNextHintObjectID;
         int mNextHintIndex;
 
+        int mCurrentHintTargetObject[2];
+
+        double mCurrentHintTargetPointerBounce[2];
+        float mCurrentHintTargetPointerFade[2];
+        doublePair mLastHintTargetPos[2];
+
+        SimpleVector<OldHintArrow> mOldHintArrows;
+
+
         SimpleVector<TransRecord *> mLastHintSortedList;
         int mLastHintSortedSourceID;
         char *mLastHintFilterString;
@@ -717,10 +808,14 @@ class LivingLifePage : public GamePage, public ActionListener {
         
 
         int getNumHints( int inObjectID );
-        char *getHintMessage( int inObjectID, int inIndex );
+        
+        // inDoNotPointAtThis specifies an object that we should never
+        // add a visual pointer to (like what we are holding)
+        char *getHintMessage( int inObjectID, int inIndex,
+                              int inDoNotPointAtThis = -1 );
 
         char *mHintFilterString;
-        
+        char mHintFilterStringNoMatch;
 
         
         // offset from current view center
@@ -738,6 +833,21 @@ class LivingLifePage : public GamePage, public ActionListener {
         int mLiveTutorialSheetIndex;
         int mLiveTutorialTriggerNumber;
 
+
+
+        doublePair mCravingHideOffset[NUM_HINT_SHEETS];
+        doublePair mCravingPosOffset[NUM_HINT_SHEETS];
+        doublePair mCravingTargetOffset[NUM_HINT_SHEETS];
+
+        doublePair mCravingExtraOffset[NUM_HINT_SHEETS];
+
+        char *mCravingMessage[NUM_HINT_SHEETS];
+
+        int mLiveCravingSheetIndex;
+        
+        void setNewCraving( int inFoodID, int inYumBonus );
+
+        
 
 
         // relative to map corner, but not necessary in bounds
@@ -790,6 +900,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         // the object that we're mousing over
         int mLastMouseOverID;
         int mCurMouseOverID;
+        int mCurMouseOverBiome;
+        
         float mCurMouseOverFade;
         
         GridPos mCurMouseOverSpot;
@@ -842,12 +954,16 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         double mPageStartTime;
 
+
+        // note:
+        // closestPathPos must be set before calling this
         void computePathToDest( LiveObject *inObject );
         
+
         double computePathSpeedMod( LiveObject *inObject, int inPathLength );
         
-        // check if same floor is present when we take a step in x or y
-        char isSameFloor( int inFloor, GridPos inFloorPos, int inDX, int inDY );
+        // check if same road is present when we take a step in x or y
+        char isSameRoad( int inFloor, GridPos inFloorPos, int inDX, int inDY );
         
         // forces next pointerDown call to avoid everything but ground clicks
         char mForceGroundClick;
@@ -918,7 +1034,9 @@ class LivingLifePage : public GamePage, public ActionListener {
         char mShowHighlights;
 
 
-        void handleAnimSound( int inObjectID, double inAge, 
+        // inSourcePlayerID -1 if animation not connected to a player
+        void handleAnimSound( int inSourcePlayerID, 
+                              int inObjectID, double inAge, 
                               AnimType inType,
                               int inOldFrameCount, int inNewFrameCount,
                               double inPosX, double inPosY );
@@ -939,10 +1057,65 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         char mUsingSteam;
         char mZKeyDown;
+        
+        char mXKeyDown;
 
         char mPlayerInFlight;
 
         Picker mObjectPicker;
+
+
+        void pushOldHintArrow( int inIndex );
+
+
+        char isHintFilterStringInvalid();
+        
+        
+
+        SimpleVector<int> mBadBiomeIndices;
+        
+        SimpleVector<char*> mBadBiomeNames;
+    
+        char isBadBiome( int inMapI );
+
+        void drawHomeSlip( doublePair inSlipPos, int inIndex = 0 );
+        
+
+        void updateLeadership();
+        
+
+        // 0 for normal
+        // 1 for half x
+        // 2 for full x
+        SimpleVector<int> mLeadershipBadges[3];
+
+        int mFullXObjectID;
+
+
+        // where player is standing or held
+        doublePair getPlayerPos( LiveObject *inPlayer );
+
+
+        SimpleVector<int> getOurLeadershipChain();
+        
+
+        char isFollower( LiveObject *inLeader, 
+                         LiveObject *inFollower );
+        
+        int getTopLeader( LiveObject *inPlayer );
+
+        // is exiled from a point of view
+        char isExiled( LiveObject *inViewer, LiveObject *inPlayer );
+        
+
+        void displayGlobalMessage( char *inMessage );
+
+        
+        // true if tile index is covered by a floor tile that doesn't
+        // have a +noCover tag
+        char isCoveredByFloor( int inTileIndex );
+
+        int getBadgeObjectID( LiveObject *inPlayer );
 
     };
 

@@ -50,6 +50,38 @@ echo ""
 
 # delete backup files older than two weeks
 find ~/backups/$server -mtime +14 -delete
+
+
+
+
+
+
+user=jcr13
+server=projectdecember.onehouronelife.com
+
+
+echo ""
+echo "Using rsync to sync all backups from $server"
+echo ""
+
+
+if [ ! -f ~/backups/$server ]
+then
+    mkdir ~/backups/$server
+fi
+
+rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress $user@$server:backups/* ~/backups/$server
+
+
+echo ""
+echo "Deleting local files that are more than 14 days old"
+echo ""
+
+# delete backup files older than two weeks
+find ~/backups/$server -mtime +14 -delete
+
+
+
  
 
 
@@ -71,6 +103,10 @@ fi
 
 rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress thecastledoctrine.net:backups/* ~/backups/thecastledoctrine/
 
+# delete backup files older than two weeks
+find ~/backups/thecastledoctrine -mtime +14 -delete
+
+
 
 if [ ! -f ~/backups/cordialminuet ]
 then
@@ -79,6 +115,9 @@ fi
 
 rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress cordialminuet.com:backups/* ~/backups/cordialminuet/
 
+
+# delete backup files older than two weeks
+find ~/backups/cordialminuet -mtime +14 -delete
 
 
 

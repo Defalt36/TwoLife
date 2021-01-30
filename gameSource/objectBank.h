@@ -30,6 +30,7 @@ typedef struct TapoutRecord {
         int postBuildLimitX, postBuildLimitY;
     } TapoutRecord;
 
+    
 
 
 typedef struct ObjectRecord {
@@ -164,6 +165,10 @@ typedef struct ObjectRecord {
         // floorHugging objects automatically get wallLayer set to true
         char wallLayer;
         
+        // true if in wall layer, but drawn in front of other walls
+        char frontWall;
+        
+
         
         int foodValue;
         
@@ -389,6 +394,8 @@ typedef struct ObjectRecord {
         char isFlightLanding;
         
         char isOwned;
+        char isTempOwned;
+        char isFollowerOwned;
         
         char noHighlight;
         
@@ -421,6 +428,83 @@ typedef struct ObjectRecord {
         SimpleVector<int> IndX;
         SimpleVector<int> IndY;
         SimpleVector<char*> IndPass;
+        char isAutoOrienting;
+        char causeAutoOrientHOnly;
+        char causeAutoOrientVOnly;
+        int horizontalVersionID;
+        int verticalVersionID;
+        int cornerVersionID;
+        
+
+        char isTapOutTrigger;
+
+        int toolSetIndex;
+        char toolLearned;
+
+        
+        char isBiomeLimited;
+        int maxBiomeMapEntry;
+        // one entry per biome
+        char *permittedBiomeMap;
+        
+        char autoDefaultTrans;
+
+        char noBackAccess;
+
+        int alcohol;
+        
+        // 0 if using object doesn't determine a family's homeland
+        int famUseDist;
+        
+        // where this object occurs naturally (or on grid), 
+        // it forces a biome under itself
+        // -1 if no biome forced
+        int forceBiome;
+        
+        // is this an expert-find object?
+        char expertFind;
+        
+        // is this object useable by normal players only?
+        // non-tutorial, non-cursed players
+        char normalOnly;
+        
+        // -1 if this object is in its own yum class
+        // or the object ID of its YUM parent
+        // tag of +yum453 in object description specifies 453 as the yum parent 
+        int yumParentID;
+        
+        // -1 if this object is in its own road class
+        // or ID of other object that is the same type of road
+        // tag of +road453 in object description specifies 453 as road parent
+        int roadParentID;
+        
+        // for floor objects that don't completely cover ground
+        char noCover;
+        
+        // are objects in container slots invisible?
+        char slotsInvis;
+
+        
+        // alternate x pos for no-flip sprites if object drawn flipped
+        // (instead of just -x from normal pos)
+        // this can be NULL if not used for an object
+        double *spriteNoFlipXPos;
+        
+        // if true, when parent object is constructed in the world
+        // it is replaced by the next var object child in line
+        char useVarSerialNumbers;
+
+        // object var number expressed as a visible numeral
+        // (so it's not the usual invisibly incremented var number)
+        char varIsNumeral;
+
+        
+        // true if generally non-blocking, but should block non-followers
+        // of owners
+        char blocksNonFollower;
+
+        char hasBadgePos;
+        doublePair badgePos;
 
     } ObjectRecord;
 
@@ -508,7 +592,8 @@ int reAddObject( ObjectRecord *inObject,
 
 
 
-ObjectRecord *getObject( int inID );
+// if inID doesn't exist, returns default object, unless inNoDefault is set
+ObjectRecord *getObject( int inID, char inNoDefault = false );
 
 
 // return array destroyed by caller, NULL if none found
@@ -705,6 +790,11 @@ int getRandomDeathMarker();
 // NOT destroyed or modified by caller
 SimpleVector<int> *getAllPossibleDeathIDs();
 
+// NOT destroyed or modified by caller
+// does NOT included use dummies
+SimpleVector<int> *getAllPossibleFoodIDs();
+
+
 
 
 // return array destroyed by caller
@@ -834,6 +924,7 @@ typedef struct SubsetSpriteIndexMap {
 // pass in empty vector if index mapping is desired
 // passed-in vector is NOT filled with anything if object is not a sprite subset
 char isSpriteSubset( int inSuperObjectID, int inSubObjectID,
+                     char inIgnoreColors = false,
                      SimpleVector<SubsetSpriteIndexMap> *outMapping = NULL );
 
 
@@ -854,6 +945,13 @@ void computeHeldDrawPos( HoldingPos inHoldingPos, doublePair inPos,
 // sets vis flags in inSpriteVis based on inUsesRemaining
 void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
                         char *inSpriteVis );
+
+
+// sets vis flags in inSpriteVis based on inVarNumber
+// pass 0 for inVarNumber to show all
+void setupNumericSprites( ObjectRecord *inObject, int inVarNumber,
+                          int inMax,
+                          char *inSpriteVis );
 
 
 
@@ -899,10 +997,48 @@ char canPickup( int inObjectID, double inPlayerAge );
 
 
 
+
+SimpleVector<int> findObjectsMatchingWords( char *inWords, 
+                                            int inIgnoreObjectID,
+                                            int inLimit,
+                                            int *outNumFilterHits );
+
+
+// terminates string to remove comment
+void stripDescriptionComment( char *inString );
+
+
+
 TapoutRecord *getTapoutRecord( int inObjectID );
 
 
 void clearTapoutCounts();
+
+
+void clearToolLearnedStatus();
+
+
+// gets object IDs that belong to a tool set
+void getToolSetMembership( int inToolSetIndex, 
+                           SimpleVector<int> *outListToFill );
+
+
+// gets indices of all tool sets
+void getAllToolSets( SimpleVector<int> *outListToFill );
+
+
+
+char canBuildInBiome( ObjectRecord *inObj, int inTargetBiome );
+
+
+int getMaxFoodValue();
+
+
+char sameRoadClass( int inFloorA, int inFloorB );
+
+
+// gets next var child in line for a serial numbered object ID
+int getNextVarSerialNumberChild( ObjectRecord *inO );
 
 
 

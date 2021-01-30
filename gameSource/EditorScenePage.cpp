@@ -89,6 +89,9 @@ EditorScenePage::EditorScenePage()
           mCellSpriteVanishSlider( smallFont, -450, -310, 2,
                                    100, 20,
                                    0, 1, "Use" ),
+          mCellSpriteVarSlider( smallFont, -250, -310, 2,
+                                100, 20,
+                                0, 1, "Var" ),
           mCellXOffsetSlider( smallFont, -450, -230, 2,
                               175, 20,
                               -MAX_OFFSET, MAX_OFFSET, "X Offset" ),
@@ -109,7 +112,7 @@ EditorScenePage::EditorScenePage()
                                "0123456789." ),
           mPersonEmotField( smallFont, 360, -290, 7,
                                true, "Emot",
-                               "/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" ),
+                               "*/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789," ),
           mCellDestSprite( loadSprite( "centerMark.tga" ) ),
           mPersonDestSprite( loadSprite( "internalPaperMark.tga" ) ),
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
@@ -196,6 +199,11 @@ EditorScenePage::EditorScenePage()
     addComponent( &mCellSpriteVanishSlider );
     mCellSpriteVanishSlider.setVisible( false );
     mCellSpriteVanishSlider.addActionListener( this );
+
+
+    addComponent( &mCellSpriteVarSlider );
+    mCellSpriteVarSlider.setVisible( false );
+    mCellSpriteVarSlider.addActionListener( this );
     
     
     addComponent( &mCellXOffsetSlider );
@@ -458,7 +466,8 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
                     c->oID = id;
                     c->contained.deleteAll();
                     c->subContained.deleteAll();
-                    c->numUsesRemaining = o->numUses;                    
+                    c->numUsesRemaining = o->numUses;
+                    c->varNumber = 0;
                     }
                 }
             }
@@ -606,6 +615,10 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
         c->numUsesRemaining = lrint( mCellSpriteVanishSlider.getValue() );
         mCellSpriteVanishSlider.setValue( c->numUsesRemaining );
         }
+    else if( inTarget == &mCellSpriteVarSlider ) {
+        c->varNumber = lrint( mCellSpriteVarSlider.getValue() );
+        mCellSpriteVarSlider.setValue( c->varNumber );
+        }
     else if( inTarget == &mCellXOffsetSlider ) {
         c->xOffset = lrint( mCellXOffsetSlider.getValue() );
         mCellXOffsetSlider.setValue( c->xOffset );
@@ -633,9 +646,26 @@ void EditorScenePage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mPersonEmotField ) {
         char *text = mPersonEmotField.getText();
 
-        if( strstr( text, "/" ) == text ) {
-            // starts with /
-            p->currentEmot = getEmotion( getEmotionIndex( text ) );
+        if( strstr( text, "/" ) == text ||
+            strstr( text, "*" ) == text ) {
+            // starts with / or *
+            
+            int numParts = 0;
+            char **parts = split( text, ",", &numParts );
+            
+            if( numParts > 0 ) {
+                p->currentEmot = getEmotion( getEmotionIndex( parts[0] ) );
+                delete [] parts[0];
+                }
+            p->extraEmot.deleteAll();
+            for( int i=1; i<numParts; i++ ) {
+                Emotion *e = getEmotion( getEmotionIndex( parts[i] ) );
+                if( e != NULL ) {
+                    p->extraEmot.push_back( e );
+                    }
+                delete [] parts[i];
+                }
+            delete [] parts;
             }
         else {
             // check for straight number
@@ -822,6 +852,22 @@ void EditorScenePage::checkVisible() {
             mCellSpriteVanishSlider.setVisible( false );
             }
 
+        char *varPos = strstr( cellO->description, "$" );
+        if( varPos != NULL ) {
+            int maxVar = 0;
+            sscanf( &( varPos[1] ), "%d", &maxVar );
+            
+            if( maxVar > 0 ) {
+                mCellSpriteVarSlider.setVisible( true );
+                mCellSpriteVarSlider.setHighValue( maxVar );
+                mCellSpriteVanishSlider.setValue( c->varNumber );
+                }
+            }
+        else {
+            mCellSpriteVanishSlider.setVisible( false );
+            }
+
+
         mCellXOffsetSlider.setVisible( true );
         mCellYOffsetSlider.setVisible( true );
         
@@ -864,6 +910,13 @@ void EditorScenePage::checkVisible() {
 
         if( p->currentEmot != NULL ) {
             mPersonEmotField.setText( p->currentEmot->triggerWord );
+            for( int i=0; i < p->extraEmot.size(); i++ ) {
+                char *s = autoSprintf( 
+                    ",%s", 
+                    p->extraEmot.getElementDirect( i )->triggerWord );
+                mPersonEmotField.insertString( s );
+                delete [] s;
+                }
             }
         else {
             mPersonEmotField.setText( "" );
@@ -1387,6 +1440,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         else {
                             
                             setAnimationEmotion( p->currentEmot );
+                            addExtraAnimationEmotions( &( p->extraEmot ) );
                             
                             ClothingSet clothingToDraw = p->clothing;
                             
@@ -1468,6 +1522,8 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                 p->subContained.getElementArray();
 
                             setAnimationEmotion( p->heldEmotion );
+                            addExtraAnimationEmotions( 
+                                &( p->heldExtraEmotion ) );
                             
                             if( splitHeld ) {
                                 // draw behind part
@@ -1582,9 +1638,9 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         continue;
                         }
                     if( ( b == 3 && 
-                          ! ( o->floorHugging && o->numSlots == 0 )  ) 
+                          ! ( o->wallLayer && ! o->frontWall )  ) 
                         ||
-                        ( b != 3 && o->floorHugging && o->numSlots == 0 
+                        ( b != 3 && o->wallLayer && ! o->frontWall 
                           && ! ( o->drawBehindPlayer || 
                                  o->anySpritesBehindPlayer ) ) ) {
                         continue;
@@ -1592,7 +1648,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
 
                     
                     if( b == 4 &&
-                        ! ( o->floorHugging && o->numSlots > 0 ) ) {
+                        ! ( o->wallLayer && o->frontWall ) ) {
                         continue;
                         }
 
@@ -1633,7 +1689,13 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                                            cellO->spriteSkipDrawing );
                         }
                     
-                    
+                    if( c->varNumber > 0 ) {
+                        setupNumericSprites( 
+                            cellO, c->varNumber,
+                            mCellSpriteVarSlider.getHighValue(),
+                            cellO->spriteSkipDrawing );
+                        }
+
                     double frozenRotFrameTime = 0;
                     
                     if( c->anim == moving ) {
@@ -2243,6 +2305,7 @@ void EditorScenePage::keyDown( unsigned char inASCII ) {
                 p->heldAge = mCopyBuffer.age;
                 p->returnHeldAge = p->heldAge;
                 p->heldEmotion = mCopyBuffer.currentEmot;
+                p->heldExtraEmotion = mCopyBuffer.extraEmot;
                 }
             }
         }
@@ -2305,6 +2368,7 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->heldClothing = getEmptyClothingSet();
     
     inCell->heldEmotion = NULL;
+    inCell->heldExtraEmotion.deleteAll();
     
     inCell->contained.deleteAll();
     inCell->subContained.deleteAll();    
@@ -2327,6 +2391,7 @@ void EditorScenePage::clearCell( SceneCell *inCell ) {
     inCell->moveDelayTime = 0;
     
     inCell->currentEmot = NULL;
+    inCell->extraEmot.deleteAll();
     }
 
 
@@ -2610,7 +2675,7 @@ void scanClothingLine( char *inLine, ObjectRecord **inSpot,
     int id = -1;
     sscanf( inLine, inFormat, &id );
     
-    if( id == -1 ) {
+    if( id <= 0 ) {
         *inSpot = NULL;
         }
     else {

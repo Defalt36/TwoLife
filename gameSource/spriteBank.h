@@ -18,6 +18,10 @@ typedef struct SpriteRecord {
 
         char multiplicativeBlend;
 
+        // sprite should never flip when drawn, no matter what (for
+        // words and such)
+        char noFlip;
+
         // maximum pixel dimension
         // (used for sizing in pickers)
         int maxD;
@@ -97,8 +101,18 @@ SpriteRecord *getSpriteRecord( int inID );
 
 char getUsesMultiplicativeBlending( int inID );
 
+char getNoFlip( int inID );
+
+
 // not destroyed by caller
 char *getSpriteTag( int inID );
+
+
+// these count calls to getSprite, which we assume are invoked
+// once per sprite draw
+void startCountingUniqueSpriteDraws();
+
+unsigned int endCountingUniqueSpriteDraws();
 
 
 SpriteHandle getSprite( int inID );
@@ -156,6 +170,11 @@ void setRemapFraction( double inFraction );
 
 
 void countLoadedSprites( int *outLoaded, int *outTotal );
+
+
+// returns true if implementation is fully-functional sprite bank
+// or false if implementation is a dummy implementation (server-side)
+char realSpriteBank();
 
 
 

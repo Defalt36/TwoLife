@@ -25730,7 +25730,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
 
     char tryingToPickUpBaby = false;
     
-    double ourAge = computeCurrentAge( ourLiveObject );
+    double ourAge = computeCurrentAgeNoOverride( ourLiveObject );
 
     if( destID == 0 &&
         p.hit &&
@@ -25753,7 +25753,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
                 if( distance( targetPos, o->currentPos ) < 1 ) {
                     // clicked on someone
 
-                    if( computeCurrentAge( o ) < 5 ) {
+                    if( computeCurrentAgeNoOverride( o ) < 5 ) {
 
                         // they're a baby
                         

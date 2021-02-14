@@ -1027,6 +1027,7 @@ typedef enum messageType {
     PHOTO_SIGNATURE,
     FORCED_SHUTDOWN,
     GLOBAL_MESSAGE,
+    FLIP,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1161,6 +1162,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "MS" ) == 0 ) {
         returnValue = GLOBAL_MESSAGE;
+        }
+    else if( strcmp( copy, "FL" ) == 0 ) {
+        returnValue = FLIP;
         }
     
     delete [] copy;
@@ -1462,7 +1466,7 @@ static GridPos sub( GridPos inA, GridPos inB ) {
 static double measurePathLength( LiveObject *inObject,
                                  int inPathLength ) {
     // diags are square root of 2 in length
-    double diagLength = 1.4142356237;
+    double diagLength = 1.41421356237;
     
 
     double totalLength = 0;
@@ -2299,6 +2303,7 @@ LivingLifePage::LivingLifePage()
           mFloorSplitSprite( loadSprite( "floorSplit.tga", false ) ),
           mCellBorderSprite( loadWhiteSprite( "cellBorder.tga" ) ),
           mCellFillSprite( loadWhiteSprite( "cellFill.tga" ) ),
+          mHintArrowSprite( loadSprite( "hintArrow.tga" ) ),
           mHomeSlipSprite( loadSprite( "homeSlip.tga", false ) ),
           mLastMouseOverID( 0 ),
           mCurMouseOverID( 0 ),
@@ -2337,6 +2342,9 @@ LivingLifePage::LivingLifePage()
     mSayField.setIgnoreArrowKeys( true );
     // drawn under world at (0,1000), don't allow click to focus
     mSayField.setIgnoreMouse( true );
+
+    // allow ctrl-v to paste into chat from clipboard
+    mSayField.usePasteShortcut( true );
     
     initLiveTriggers();
 
@@ -2412,10 +2420,10 @@ LivingLifePage::LivingLifePage()
 
     for( int i=0; i<3; i++ ) {    
         mHungerSlipShowOffsets[i].x = -540;
-        mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
+        mHungerSlipShowOffsets[i].y = -250;
     
         mHungerSlipHideOffsets[i].x = -540;
-        mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
+        mHungerSlipHideOffsets[i].y = -370;
         
         mHungerSlipWiggleTime[i] = 0;
         mHungerSlipWiggleAmp[i] = 0;
@@ -2481,6 +2489,13 @@ LivingLifePage::LivingLifePage()
     
     mLastHintSortedSourceID = 0;
     
+    mCurrentHintTargetObject = 0;
+    mCurrentHintTargetPointerBounce = 0;
+
+    mLastHintTargetPos.x = 0;
+    mLastHintTargetPos.y = 0;
+
+
     int maxObjectID = getMaxObjectID();
     
     mHintBookmarks = new int[ maxObjectID + 1 ];
@@ -2808,7 +2823,8 @@ LivingLifePage::~LivingLifePage() {
     
     freeSprite( mCellBorderSprite );
     freeSprite( mCellFillSprite );
-    
+    freeSprite( mHintArrowSprite );
+
     freeSprite( mNotePaperSprite );
     freeSprite( mChalkBlotSprite );
     freeSprite( mPathMarkSprite );
@@ -3079,8 +3095,8 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     
     double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
     
-    if( firstLineY > lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetY ) {
-        firstLineY = lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetY;
+    if( firstLineY > lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetX) {
+        firstLineY = lastScreenViewCenter.y + 330 + HetuwMod::panelOffsetX;
         }
 
     
@@ -8328,7 +8344,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
     
     for( int i=0; i<3; i++ ) { 
         if( !equal( mHungerSlipPosOffset[i], mHungerSlipHideOffsets[i] ) ) {
-            doublePair slipPos = lastScreenViewCenter;
+            doublePair slipPos = { lastScreenViewCenter.x - (HetuwMod::zoomScale*540-540), lastScreenViewCenter.y - (HetuwMod::zoomScale*235-235) };
             slipPos = add( slipPos, mHungerSlipPosOffset[i] );
             
             if( mHungerSlipWiggleAmp[i] > 0 ) {
@@ -8384,7 +8400,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 			if ( showHelp ) {
 				setDrawColor( 1, 1, 1, 0.2f );
 				}
-            drawSprite( mHungerSlipSprites[i], slipPos );
+            drawSprite( mHungerSlipSprites[i], slipPos, 1.25*HetuwMod::guiScale );
             }
         }
 
@@ -8432,8 +8448,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
     panelPos.y -= 242 + 32 + 16 + 6;
-	panelPos.y -= HetuwMod::panelOffsetY;
-    drawSprite( mGuiPanelSprite, panelPos );
+		panelPos.y -= (HetuwMod::panelOffsetY * 0.825);
+    drawSprite( mGuiPanelSprite, panelPos, 1.25*HetuwMod::guiScale );
 
     if( ourLiveObject != NULL &&
         ourLiveObject->dying  &&
@@ -8442,7 +8458,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         doublePair bloodPos = panelPos;
         bloodPos.y -= 32;
         bloodPos.x -= 32;
-        drawSprite( mGuiBloodSprite, bloodPos );
+        drawSprite( mGuiBloodSprite, bloodPos, 1.25*HetuwMod::guiScale );
         toggleMultiplicativeBlend( false );
         }
     
@@ -8489,23 +8505,23 @@ void LivingLifePage::draw( doublePair inViewCenter,
         toggleMultiplicativeBlend( true );
 
         for( int i=0; i<ourLiveObject->foodCapacity; i++ ) {
-            doublePair pos = { lastScreenViewCenter.x - 590, 
-                               lastScreenViewCenter.y - 334 - HetuwMod::panelOffsetY };
+            doublePair pos = { lastScreenViewCenter.x - 590 - (HetuwMod::panelOffsetX*0.92), 
+                               lastScreenViewCenter.y - 334 - (HetuwMod::panelOffsetY*0.93) };
         
-            pos.x += i * 30;
+            pos.x += i * 30 * HetuwMod::zoomScale;
             drawSprite( 
                     mHungerBoxSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
-                    pos );
+                    pos, 1.25*HetuwMod::guiScale );
                 
             if( i < ourLiveObject->foodStore ) {                
                 drawSprite( 
                     mHungerBoxFillSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
-                    pos );
+                    pos, 1.25*HetuwMod::guiScale );
                 }
             else if( i < ourLiveObject->maxFoodStore ) {
                 drawSprite( 
                     mHungerBoxFillErasedSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
-                    pos );
+                    pos, 1.25*HetuwMod::guiScale );
                 }
             }
         for( int i=ourLiveObject->foodCapacity; 
@@ -8516,12 +8532,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
             pos.x += i * 30;
             drawSprite( 
                 mHungerBoxErasedSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
-                pos );
+                pos, 1.25*HetuwMod::guiScale );
             
             if( i < ourLiveObject->maxFoodStore ) {
                 drawSprite( 
                     mHungerBoxFillErasedSprites[ i % NUM_HUNGER_BOX_SPRITES ], 
-                    pos );
+                    pos, 1.25*HetuwMod::guiScale );
                 }
             }
         
@@ -8591,7 +8607,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
         for( int i=0; i<mOldDesStrings.size(); i++ ) {
             doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 313 };
+                               lastScreenViewCenter.y - 313 - HetuwMod::panelOffsetY };
             float fade =
                 mOldDesFades.getElementDirect( i );
             
@@ -8710,7 +8726,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
             
             doublePair pos = { lastScreenViewCenter.x, 
-                               lastScreenViewCenter.y - 313 };
+                               lastScreenViewCenter.y - 313 - HetuwMod::panelOffsetY };
 
             char *des = NULL;
             char *desToDelete = NULL;
@@ -9146,6 +9162,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
+	HetuwMod::livingLifeDraw();
+
 	// minitech
 	float worldMouseX, worldMouseY;
 	getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
@@ -9153,10 +9171,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
 				   lastScreenMouseY,
 				   &worldMouseX,
 				   &worldMouseY );
-				   
-	HetuwMod::livingLifeDraw();
 	minitech::livingLifeDraw(worldMouseX, worldMouseY);
-	
+
     if( vogMode ) {
         // draw again, so we can see picker
         PageComponent::base_draw( inViewCenter, inViewSize );
@@ -9539,6 +9555,9 @@ int LivingLifePage::getNumHints( int inObjectID ) {
         return mLastHintSortedList.size();
         }
     
+    
+    mCurrentHintTargetObject = 0;
+
 
     // else need to regenerated sorted list
 
@@ -11475,9 +11494,9 @@ void LivingLifePage::step() {
         // send KA to keep connection open
         sendToServerSocket( (char*)"KA 0 0#" );
         }
-	
-    HetuwMod::livingLifeStep();
+    
 	minitech::livingLifeStep();
+	HetuwMod::livingLifeStep();
 
     char *message = getNextServerMessage();
 
@@ -11569,6 +11588,51 @@ void LivingLifePage::step() {
                 
                 delete [] spaces;
                 }
+            }
+        else if( type == FLIP ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+
+            if( numLines > 0 ) {
+                delete [] lines[0];
+                }
+            
+            for( int i=1; i<numLines; i++ ) {
+                int id = 0;
+                int facingLeft = 0;
+                
+                int numRead = 
+                    sscanf( lines[i], "%d %d", &id, &facingLeft );
+            
+                if( numRead == 2 ) {
+                    LiveObject *o = getLiveObject( id );
+                    
+                    if( o != NULL && ! o->inMotion ) {
+                        char flip = false;
+                        
+                        if( facingLeft && ! o->holdingFlip ) {
+                            o->holdingFlip = true;
+                            flip = true;
+                            }
+                        else if( ! facingLeft && o->holdingFlip ) {
+                            o->holdingFlip = false;
+                            flip = true;
+                            }
+                        if( flip ) {
+                            o->lastAnim = moving;
+                            o->curAnim = ground2;
+                            o->lastAnimFade = 1;
+
+                            o->lastHeldAnim = moving;
+                            o->curHeldAnim = held;
+                            o->lastHeldAnimFade = 1;
+                            }
+                        }
+                    }
+                delete [] lines[i];
+                }
+            
+            delete [] lines;
             }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
@@ -12630,6 +12694,7 @@ void LivingLifePage::step() {
                 if( !( mFirstServerMessagesReceived & 1 ) ) {
                     // first map chunk just recieved
 					
+					HetuwMod::initOnServerJoin();
 					minitech::initOnBirth();
                     
                     char found = false;
@@ -15360,6 +15425,10 @@ void LivingLifePage::step() {
                         
                         o.holdingFlip = false;
                         
+                        o.lastFlipSendTime = game_getCurrentTime();
+                        o.lastFlipSent = false;
+                        
+
                         o.lastHeldByRawPosSet = false;
 
                         o.pendingAction = false;
@@ -15752,7 +15821,6 @@ void LivingLifePage::step() {
                 
                 ourID = ourObject->id;
 
-				HetuwMod::initOnServerJoin();
                 if( ourID != lastPlayerID ) {
                     homePosStack.deleteAll();
 					HetuwMod::initOnBirth();
@@ -18274,6 +18342,31 @@ void LivingLifePage::step() {
 
 
 
+    if( ourLiveObject != NULL ) {
+        if( ourLiveObject->holdingFlip != ourLiveObject->lastFlipSent &&
+            currentTime - ourLiveObject->lastFlipSendTime > 2 ) {
+            
+            // been 2 seconds since last sent FLIP to server
+            // avoid spamming
+            int offset = 1;
+            
+            if( ourLiveObject->holdingFlip ) {
+                offset = -1;
+                }
+            
+            char *message = autoSprintf( 
+                "FLIP %d %d#",
+                ourLiveObject->xd + offset,
+                ourLiveObject->yd );
+            
+            sendToServerSocket( message );
+            
+            delete [] message;
+            ourLiveObject->lastFlipSendTime = currentTime;
+            ourLiveObject->lastFlipSent = ourLiveObject->holdingFlip;
+            }
+        }
+    
     
 
     if( mFirstServerMessagesReceived == 3 ) {
@@ -18606,7 +18699,7 @@ void LivingLifePage::makeActive( char inFresh ) {
     showFPS = false;
     showNet = false;
     showPing = false;
-	showHelp = false;
+    showHelp = false;
     
     waitForFrameMessages = false;
 
@@ -19538,6 +19631,40 @@ void LivingLifePage::pointerMove( float inX, float inY ) {
         mLastMouseOverFade = 1.0f;
         }
     
+    
+    double worldX = inX / (double)CELL_D;
+    
+
+    if( ! ourLiveObject->inMotion &&
+        // watch for being stuck with no-move object in hand, like fishing
+        // pole
+        ( ourLiveObject->holdingID <= 0 ||
+          getObject( ourLiveObject->holdingID )->speedMult > 0 ) ) {
+        char flip = false;
+        
+        if( ourLiveObject->holdingFlip &&
+            worldX > ourLiveObject->currentPos.x + 0.5 ) {
+            ourLiveObject->holdingFlip = false;
+            flip = true;
+            }
+        else if( ! ourLiveObject->holdingFlip &&
+                 worldX < ourLiveObject->currentPos.x - 0.5 ) {
+            ourLiveObject->holdingFlip = true;
+            flip = true;
+            }
+
+        if( flip ) {
+            ourLiveObject->lastAnim = moving;
+            ourLiveObject->curAnim = ground2;
+            ourLiveObject->lastAnimFade = 1;
+            
+            ourLiveObject->lastHeldAnim = moving;
+            ourLiveObject->curHeldAnim = held;
+            ourLiveObject->lastHeldAnimFade = 1;
+            }
+        }
+    
+    
     }
 
 
@@ -19614,6 +19741,8 @@ bool LivingLifePage::hetuwMouseIsDown() {
 
 
 void LivingLifePage::pointerDown( float inX, float inY ) {
+	if (minitech::livingLifePageMouseDown( inX, inY )) return;
+	
 	if (!mForceGroundClick && HetuwMod::livingLifePageMouseDown( inX, inY ))
 		return;
 
@@ -21926,8 +22055,8 @@ void LivingLifePage::hetuwSetPanelOffsets() {
 	int tempmHungerSlipHideOffsetsY[3];
     for( int i=0; i<3; i++ ) {
 		tempmHungerSlipHideOffsetsY[i] = mHungerSlipHideOffsets[i].y; 
-        mHungerSlipShowOffsets[i].y = -250 - HetuwMod::panelOffsetY;
-        mHungerSlipHideOffsets[i].y = -370 - HetuwMod::panelOffsetY;
+        mHungerSlipShowOffsets[i].y = -250;
+        mHungerSlipHideOffsets[i].y = -370;
 	}
     mHungerSlipShowOffsets[2].y += 20;
     mHungerSlipHideOffsets[2].y -= 20;

@@ -1,4 +1,5 @@
 #include "hetuwmod.h"
+#include "minitech.h"
 
 #include <iostream>
 #include <vector>
@@ -293,7 +294,7 @@ void HetuwMod::init() {
 
 	zoomScale = 1.5f;
 	guiScaleRaw = 0.8f;
-	guiScale = guiScaleRaw * zoomScale;
+	guiScale = 1.25 * guiScaleRaw * zoomScale;
 	zoomCalc();
 	
 	colorRainbow = new RainbowColor();
@@ -2097,6 +2098,17 @@ void HetuwMod::livingLifeDraw() {
 	//drawRect( debugRecPos2, 10, 10 );
 
 	if (bDrawBiomeInfo) drawBiomeIDs();
+	
+	if (minitech::minitechEnabled) {
+		minitech::viewWidth = HetuwMod::viewWidth;
+		minitech::viewHeight = HetuwMod::viewHeight;
+		minitech::guiScale = 1.25 * HetuwMod::guiScale;
+		
+		minitech::handwritingFont->hetuwSetScaleFactor( 16*minitech::guiScale );
+		minitech::mainFont->hetuwSetScaleFactor( 16*minitech::guiScale );
+		minitech::tinyHandwritingFont->hetuwSetScaleFactor( 16/2*minitech::guiScale );
+		minitech::tinyMainFont->hetuwSetScaleFactor( 16/2*minitech::guiScale );
+		}
 }
 
 void HetuwMod::drawCoordsHelpA() {
@@ -4164,9 +4176,12 @@ void HetuwMod::updatePlayersInRangePanel() {
 
 		ObjectRecord *obj = getObject(o->displayID);
 		int youngWoman = 0;
-		if ( !obj->male )
-			if ( livingLifePage->hetuwGetAge( o ) < 40 )
+		if ( !getObject( o->displayID )->male ) {
+			bool fertile = true;
+			if (o->name != NULL) fertile = strstr(o->name, "+INFERTILE+") == NULL;
+			if ( livingLifePage->hetuwGetAge( o ) < 104 && fertile )
 				youngWoman = 1;
+			}
 
 		if (isRelated(o)) {
 			familiesInRange[0]->count++;

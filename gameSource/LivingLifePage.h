@@ -128,6 +128,9 @@ typedef struct LiveObject {
 
         char holdingFlip;
 
+        double lastFlipSendTime;
+        char lastFlipSent;
+
         char heldPosOverride;
         char heldPosOverrideAlmostOver;
         doublePair heldObjectPos;
@@ -470,7 +473,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         int getRequiredVersion() {
             return mRequiredVersion;
             }
-
+			
 		doublePair minitechGetLastScreenViewCenter();
 		char *minitechGetDisplayObjectDescription(int objId);
 		bool minitechSayFieldIsFocused() { return mSayField.isFocused(); }
@@ -644,6 +647,8 @@ class LivingLifePage : public GamePage, public ActionListener {
         SpriteHandle mCellBorderSprite;
         SpriteHandle mCellFillSprite;
         
+        SpriteHandle mHintArrowSprite;
+        
 
         SpriteHandle mHomeSlipSprite;
         SpriteHandle mHomeArrowSprites[ NUM_HOME_ARROWS ];
@@ -733,6 +738,12 @@ class LivingLifePage : public GamePage, public ActionListener {
         
         int mNextHintObjectID;
         int mNextHintIndex;
+
+        int mCurrentHintTargetObject;
+
+        double mCurrentHintTargetPointerBounce;
+        doublePair mLastHintTargetPos;
+
 
         SimpleVector<TransRecord *> mLastHintSortedList;
         int mLastHintSortedSourceID;

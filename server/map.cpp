@@ -169,7 +169,6 @@ timeSec_t slowTime() {
  
 extern GridPos getClosestPlayerPos( int inX, int inY );
 
-
 extern int getNumPlayers();
 
 
@@ -206,10 +205,6 @@ static double eveAngle = 2 * M_PI;
  
 static char eveStartSpiralPosSet = false;
 static GridPos eveStartSpiralPos = { 0, 0 };
- 
- 
- 
-static int evePrimaryLocSpacing = 0;
 
 
 
@@ -245,11 +240,6 @@ static int barrierRadius = 250;
 static int barrierOn = 1;
  
 static int longTermCullEnabled = 1;
- 
- 
-static unsigned int biomeRandSeed = 723;
- 
- 
 
 
 static unsigned int biomeRandSeedA = 727;
@@ -305,9 +295,6 @@ static int numSpecialBiomes;
 static int *specialBiomes;
 static float *specialBiomeCumuWeights;
 static float specialBiomeTotalWeight;
- 
- 
- 
 
 
 static int specialBiomeBandMode;
@@ -562,27 +549,6 @@ typedef struct TestMapRecord {
  
  
  
-// four ints to a 16-byte key
-void intQuadToKey( int inX, int inY, int inSlot, int inB,
-                   unsigned char *outKey ) {
-    for( int i=0; i<4; i++ ) {
-        int offset = i * 8;
-        outKey[i] = ( inX >> offset ) & 0xFF;
-        outKey[i+4] = ( inY >> offset ) & 0xFF;
-        outKey[i+8] = ( inSlot >> offset ) & 0xFF;
-        outKey[i+12] = ( inB >> offset ) & 0xFF;
-        }    
-    }
- 
- 
-// two ints to an 8-byte key
-void intPairToKey( int inX, int inY, unsigned char *outKey ) {
-    for( int i=0; i<4; i++ ) {
-        int offset = i * 8;
-        outKey[i] = ( inX >> offset ) & 0xFF;
-        outKey[i+4] = ( inY >> offset ) & 0xFF;
-        }    
-    }
  
  
  
@@ -590,46 +556,17 @@ void intPairToKey( int inX, int inY, unsigned char *outKey ) {
  
  
  
-// one timeSec_t to an 8-byte double value
-void timeToValue( timeSec_t inT, unsigned char *outValue ) {
-   
- 
-    // pack double time into 8 bytes in whatever endian order the
-    // double is stored on this platform
- 
-    union{ timeSec_t doubleTime; uint64_t intTime; };
- 
-    doubleTime = inT;
-   
-    for( int i=0; i<8; i++ ) {
-        outValue[i] = ( intTime >> (i * 8) ) & 0xFF;
-        }    
-    }
- 
- 
-timeSec_t valueToTime( unsigned char *inValue ) {
- 
-    union{ timeSec_t doubleTime; uint64_t intTime; };
- 
-    // get bytes back out in same order they were put in
-    intTime =
-        (uint64_t)inValue[7] << 56 | (uint64_t)inValue[6] << 48 |
-        (uint64_t)inValue[5] << 40 | (uint64_t)inValue[4] << 32 |
-        (uint64_t)inValue[3] << 24 | (uint64_t)inValue[2] << 16 |
-        (uint64_t)inValue[1] << 8  | (uint64_t)inValue[0];
-   
-    // caste back to timeSec_t
-    return doubleTime;
-    }
  
  
  
  
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 typedef struct Homeland {
         int x, y;
 
@@ -971,13 +908,6 @@ static void biomePutCached( int inX, int inY, int inBiome, int inSecondPlace,
    
     biomeCache[ computeXYCacheHash( inX, inY ) ] = r;
     }
- 
- 
- 
- 
- 
- 
- 
 
 
 
@@ -1115,44 +1045,6 @@ static int computeMapBiomeIndex( int inX, int inY,
  
     if( pickedBiome >= regularBiomeLimit && numSpecialBiomes > 0 ) {
         // special case:  on a peak, place a special biome here
- 
-        // use patches mode for these
-        pickedBiome = -1;
- 
- 
-        double maxValue = -10;
-        double secondMaxVal = -10;
-       
-        for( int i=regularBiomeLimit; i<numBiomes; i++ ) {
-            int biome = biomes[i];
-       
-            setXYRandomSeed( biome * 263 + biomeRandSeed + 38475 );
- 
-            double randVal = getXYFractal(  inX,
-                                            inY,
-                                            0.55,
-                                            2.4999 +
-                                            0.2499 * numSpecialBiomes );
-       
-            if( randVal > maxValue ) {
-                if( maxValue != -10 ) {
-                    secondMaxVal = maxValue;
-                    }
-                maxValue = randVal;
-                pickedBiome = i;
-                }
-            }
-       
-        if( maxValue - secondMaxVal < 0.03 ) {
-            // close!  that means we're on a boundary between special biomes
-           
-            // stick last regular biome on this boundary, so special
-            // biomes never touch
-            secondPlace = pickedBiome;
-            secondPlaceGap = 0.1;
-            pickedBiome = regularBiomeLimit - 1;
-            }        
-        else {
 
 
         if( specialBiomeBandMode ) {
@@ -1242,7 +1134,7 @@ static int computeMapBiomeIndex( int inX, int inY,
  
  
  
- 
+/*
 // old code, separate height fields per biome that compete
 // and create a patchwork layout
 static int computeMapBiomeIndexOld( int inX, int inY,
@@ -1317,7 +1209,7 @@ static int computeMapBiomeIndexOld( int inX, int inY,
    
     return pickedBiome;
     }
- 
+*/
  
  
  
@@ -1503,43 +1395,37 @@ static void mapCacheInsert( int inX, int inY, int inID,
  
 static int getBaseMapCallCount = 0;
  
- 
+//2HOLMERGE all modifiations removed
 static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
-   
+    
     if( inX > xLimit || inX < -xLimit ||
         inY > yLimit || inY < -yLimit ) {
-   
+    
         return edgeObjectID;
         }
-   
+    
     int cachedID = mapCacheLookup( inX, inY, outGridPlacement );
-   
+    
     if( cachedID != -1 ) {
         return cachedID;
         }
-   
+    
     getBaseMapCallCount ++;
- 
- 
+
+
     if( outGridPlacement != NULL ) {
         *outGridPlacement = false;
         }
-   
- 
+    
+
     // see if any of our grids apply
     setXYRandomSeed( 9753 );
- 
+
     for( int g=0; g < gridPlacements.size(); g++ ) {
         MapGridPlacement *gp = gridPlacements.getElement( g );
- 
- 
+
+
         /*
-        double gridWiggleX = getXYFractal( inX / gp->spacing,
-                                           inY / gp->spacing,
-                                           0.1, 0.25 );
-       
-        double gridWiggleY = getXYFractal( inX / gp->spacing,
-                                           inY / gp->spacing + 392387,
         double gridWiggleX = getXYFractal( inX / gp->spacingX, 
                                            inY / gp->spacingY, 
                                            0.1, 0.25 );
@@ -1558,22 +1444,22 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
             % gp->spacingY == 0 ) {
             
             // hits this grid
- 
+
             // make sure this biome is on the list for this object
             int secondPlace;
             double secondPlaceGap;
-       
+        
             int pickedBiome = getMapBiomeIndex( inX, inY, &secondPlace,
                                                 &secondPlaceGap );
-       
+        
             if( pickedBiome == -1 ) {
                 mapCacheInsert( inX, inY, 0 );
                 return 0;
                 }
- 
+
             if( gp->permittedBiomes.getElementIndex( pickedBiome ) != -1 ) {
                 mapCacheInsert( inX, inY, gp->id, true );
- 
+
                 if( outGridPlacement != NULL ) {
                     *outGridPlacement = true;
                     }
@@ -1582,51 +1468,41 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
             }    
         }
              
- 
- 
+
+
     setXYRandomSeed( 5379 );
-   
+    
     // first step:  save rest of work if density tells us that
     // nothing is here anyway
     double density = getXYFractal( inX, inY, 0.1, 0.25 );
-   
+    
     // correction
     density = sigmoid( density, 0.1 );
-   
+    
     // scale
     density *= .4;
     // good for zoom in to map for teaser
-    //density = 1;
-   
-    setXYRandomSeed( 9877 );
-    int secondPlace;
-    double secondPlaceGap;
+    //density = .70;
     
-    int pickedBiome = getMapBiomeIndex( inX, inY, &secondPlace,
-                                                &secondPlaceGap );
-												
-	if(biomes[pickedBiome] == 7){
-		density = 1;
-		
-	}
-	setXYRandomSeed( 9877 );
+    setXYRandomSeed( 9877 );
+    
     if( getXYRandom( inX, inY ) < density ) {
- 
- 
- 
- 
+
+
+
+
         // next step, pick top two biomes
         int secondPlace;
         double secondPlaceGap;
-       
+        
         int pickedBiome = getMapBiomeIndex( inX, inY, &secondPlace,
                                             &secondPlaceGap );
-       
+        
         if( pickedBiome == -1 ) {
             mapCacheInsert( inX, inY, 0 );
             return 0;
             }
-       
+        
         // only override if it's not already set
         // if it's already set, then we're calling getBaseMap for neighboring
         // map cells (wide, tall, moving objects, etc.)
@@ -1637,132 +1513,142 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
             lastCheckedBiomeX = inX;
             lastCheckedBiomeY = inY;
             }
-       
- 
-       
+        
+
+        
         // randomly let objects from second place biome peek through
-       
+        
         // if gap is 0, this should happen 50 percent of the time
- 
+
         // if gap is 1.0, it should never happen
- 
+
         // larger values make second place less likely
-		double secondPlaceReduction = 10.0;
+        double secondPlaceReduction = 10.0;
 
         //printf( "Second place gap = %f, random(%d,%d)=%f\n", secondPlaceGap,
         //        inX, inY, getXYRandom( 2087 + inX, 793 + inY ) );
-       
+        
         setXYRandomSeed( 348763 );
- 
+        
+        if( getXYRandom( inX, inY ) > 
+            .5 + secondPlaceReduction * secondPlaceGap ) {
+        
+            // note that lastCheckedBiome is NOT changed, so ground
+            // shows the true, first-place biome, but object placement
+            // follows the second place biome
+            pickedBiome = secondPlace;
+            }
+        
+
         int numObjects = naturalMapIDs[pickedBiome].size();
- 
+
         if( numObjects == 0  ) {
             mapCacheInsert( inX, inY, 0 );
             return 0;
             }
- 
-   
- 
+
+    
+  
         // something present here
- 
-       
-        // special object in this region is 10x more common than it
+
+        
+        // special object in this region is 10x more common than it 
         // would be otherwise
- 
- 
+
+
         int specialObjectIndex = -1;
         double maxValue = -DBL_MAX;
-       
- 
+        
+
         for( int i=0; i<numObjects; i++ ) {
-		
+            
             setXYRandomSeed( 793 * i + 123 );
-       
-            double randVal = getXYFractal(  inX,
-                                            inY,
-                                            0.3,
+        
+            double randVal = getXYFractal(  inX, 
+                                            inY, 
+                                            0.3, 
                                             0.15 + 0.016666 * numObjects );
- 
+
             if( randVal > maxValue ) {
                 maxValue = randVal;
                 specialObjectIndex = i;
+                }
             }
-			
-        }
- 
- 
-        float oldSpecialChance =
-            naturalMapChances[pickedBiome].getElementDirect(
+
+
+
+        float oldSpecialChance = 
+            naturalMapChances[pickedBiome].getElementDirect( 
                 specialObjectIndex );
-       
+        
         float newSpecialChance = oldSpecialChance * 10;
-		
+        
         *( naturalMapChances[pickedBiome].getElement( specialObjectIndex ) )
             = newSpecialChance;
-
+        
         float oldTotalChanceWeight = totalChanceWeight[pickedBiome];
-       
+        
         totalChanceWeight[pickedBiome] -= oldSpecialChance;
         totalChanceWeight[pickedBiome] += newSpecialChance;
+        
 
         // pick one of our natural objects at random
- 
+
         // pick value between 0 and total weight
-       
+        
         setXYRandomSeed( 4593873 );
-       
-        double randValue =
+        
+        double randValue = 
             totalChanceWeight[pickedBiome] * getXYRandom( inX, inY );
- 
+
         // walk through objects, summing weights, until one crosses threshold
         int i = 0;
         float weightSum = 0;        
-       
+        
         while( weightSum < randValue && i < numObjects ) {
-			
-            weightSum += naturalMapChances[pickedBiome].getElementDirect( i );			
+            weightSum += naturalMapChances[pickedBiome].getElementDirect( i );
             i++;
             }
+        
         i--;
-       
- 
+        
+
         // restore chance of special object
         *( naturalMapChances[pickedBiome].getElement( specialObjectIndex ) )
             = oldSpecialChance;
- 
+
         totalChanceWeight[pickedBiome] = oldTotalChanceWeight;
 
-			if( i >= 0 ) {
-				int returnID = naturalMapIDs[pickedBiome].getElementDirect( i );
-			   
-				if( pickedBiome == secondPlace ) {
-					// object peeking through from second place biome
-	 
-					// make sure it's not a moving object (animal)
-					// those are locked to their target biome only
-					TransRecord *t = getPTrans( -1, returnID );
-					if( t != NULL && t->move != 0 ) {
-						// put empty tile there instead
-						returnID = 0;
-						}
-					}
-	 
-				mapCacheInsert( inX, inY, returnID );
-				return returnID;
-				}
-			else {
-				mapCacheInsert( inX, inY, 0 );
-				return 0;
-			}
+        if( i >= 0 ) {
+            int returnID = naturalMapIDs[pickedBiome].getElementDirect( i );
             
-	}else {
-		if(biomes[pickedBiome] != 7){
-			mapCacheInsert( inX, inY, 0 );
-			return 0;
-			}
-		}
+            if( pickedBiome == secondPlace ) {
+                // object peeking through from second place biome
+
+                // make sure it's not a moving object (animal)
+                // those are locked to their target biome only
+                TransRecord *t = getPTrans( -1, returnID );
+                if( t != NULL && t->move != 0 ) {
+                    // put empty tile there instead
+                    returnID = 0;
+                    }
+                }
+
+            mapCacheInsert( inX, inY, returnID );
+            return returnID;
+            }
+        else {
+            mapCacheInsert( inX, inY, 0 );
+            return 0;
+            }
+        }
+    else {
+        mapCacheInsert( inX, inY, 0 );
+        return 0;
+        }
+    
     }
- 
+
  
  
  
@@ -2128,7 +2014,6 @@ void printBiomeSamples() {
 
 
 
-
 int printObjectSamples( int inXCenter, int inYCenter ) {
     int objectToCount = 2285;
    
@@ -2312,8 +2197,6 @@ static void dbTimePutCached( int inX, int inY, int inSlot, int inSubCont,
 // returns -1 on miss
 static char blockingGetCached( int inX, int inY ) {
     BlockingCacheRecord r =
-
-        blockingCache[ computeXYCacheHash( inX, inY ) ];
         blockingCache[ computeBLCacheHash( inX, inY ) ];
 
     if( r.x == inX && r.y == inY &&
@@ -2329,21 +2212,15 @@ static char blockingGetCached( int inX, int inY ) {
  
 static void blockingPutCached( int inX, int inY, char inBlocking ) {
     BlockingCacheRecord r = { inX, inY, inBlocking };
-
-   
-    blockingCache[ computeXYCacheHash( inX, inY ) ] = r;
+    
     blockingCache[ computeBLCacheHash( inX, inY ) ] = r;
-
     }
  
  
 static void blockingClearCached( int inX, int inY ) {
    
     BlockingCacheRecord *r =
-
-        &( blockingCache[ computeXYCacheHash( inX, inY ) ] );
         &( blockingCache[ computeBLCacheHash( inX, inY ) ] );
-
 
     if( r->x == inX && r->y == inY ) {
         r->blocking = -1;
@@ -3102,7 +2979,6 @@ static void setupMapChangeLogFile() {
 
     // always close file and start a new one when this is called
 
-
     if( mapChangeLogFile != NULL ) {
         fclose( mapChangeLogFile );
         mapChangeLogFile = NULL;
@@ -3110,40 +2986,9 @@ static void setupMapChangeLogFile() {
    
  
     if( logFolder.isDirectory() ) {
-       
-        char *biomeSeedString = autoSprintf( "%d", biomeRandSeed );
-       
-        // does log file already exist?
- 
-        int numFiles;
-        File **childFiles = logFolder.getChildFiles( &numFiles );
-       
-        for( int i=0; i<numFiles; i++ ) {
-            File *f = childFiles[i];
-           
-            char *name = f->getFileName();
-       
-            if( strstr( name, biomeSeedString ) != NULL ) {
-                // found!
-                char *fullFileName = f->getFullFileName();
-                mapChangeLogFile = fopen( fullFileName, "a" );
-                delete [] fullFileName;
-                }
-            delete [] name;
-            if( mapChangeLogFile != NULL ) {
-                break;
-                }
-            }
-        for( int i=0; i<numFiles; i++ ) {
-            delete childFiles[i];
-            }
-        delete [] childFiles;
- 
-        delete [] biomeSeedString;
-           
-       
+        
         if( mapChangeLogFile == NULL ) {
- 
+
             // file does not exist
             char *newFileName = 
                 autoSprintf( "%.ftime_mapLog.txt",
@@ -3154,14 +2999,14 @@ static void setupMapChangeLogFile() {
             delete [] newFileName;
             
             char *fullName = f->getFullFileName();
-           
+            
             delete f;
-       
+        
             mapChangeLogFile = fopen( fullName, "a" );
             delete [] fullName;
             }
         }
- 
+
     mapChangeLogTimeStart = Time::getCurrentTime();
     fprintf( mapChangeLogFile, "startTime: %.2f\n", mapChangeLogTimeStart );
     }
@@ -3203,32 +3048,6 @@ void reseedMap( char inForceFresh ) {
             // report a fresh arc starting
             reportArcEnd();
             }
-
-/*2HOLMERGE 
-        char *secret =
-            SettingsManager::getStringSetting( "statsServerSharedSecret",
-                                               "secret" );
-       
-        unsigned int seedBase =
-            crc32( (unsigned char*)secret, strlen( secret ) );
-       
-        unsigned int modTimeSeed =
-            (unsigned int)fmod( Time::getCurrentTime() + seedBase,
-                                4294967295U );
-       
-        JenkinsRandomSource tempRandSource( modTimeSeed );
- 
-        biomeRandSeed = tempRandSource.getRandomInt();
-       
-        AppLog::infoF( "Generating fresh map rand seed and saving to file: "
-                       "%u\n", biomeRandSeed );
- 
-        // and save it
-        seedFile = fopen( "biomeRandSeed.txt", "w" );
-        if( seedFile != NULL ) {
-           
-            fprintf( seedFile, "%d", biomeRandSeed );
-*/
 
         char *secretA =
             SettingsManager::getStringSetting( "statsServerSharedSecret", 
@@ -3399,10 +3218,9 @@ void reseedMap( char inForceFresh ) {
  
  
 char initMap() {
- 
-    reseedMap( false );
-   
-   
+
+    
+    
     numSpeechPipes = getMaxSpeechPipeIndex() + 1;
    
     speechPipesIn = new SimpleVector<GridPos>[ numSpeechPipes ];
@@ -4123,10 +3941,6 @@ char initMap() {
         specialBiomeTotalWeight += biomeWeights[i];
         specialBiomeCumuWeights[i-regularBiomeLimit] = specialBiomeTotalWeight;
         }
- 
- 
- 
-
 
 
     specialBiomeBandMode = 
@@ -4482,12 +4296,6 @@ char initMap() {
         specialPlacements->deallocateStringElements();
         delete specialPlacements;
         }
-   
-   
-   
-   
- 
-   
     
     
     reseedMap( false );
@@ -4501,10 +4309,6 @@ char initMap() {
     //outputMapImage();
  
     //outputBiomeFractals();
- 
-           
-    setupMapChangeLogFile();
- 
 
 
     return true;
@@ -5533,8 +5337,6 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 int desiredMoveDist = t->desiredMoveDist;
  
                 char stayInBiome = false;
-               
- 
                 
                 char avoidFloor = false;
                 
@@ -6006,9 +5808,6 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             // no further decay
                             leftMapETA = 0;
                             }
-						//for movement from posA to posB, we want posA to be potentially always live tracked as well
-						//leftDecayT is passed to check if it should be always live tracked
-                        setEtaDecay( inX, inY, leftMapETA, leftDecayT );
 
                         if( leftFloor ) {
                             setFloorEtaDecay( inX, inY, leftMapETA );
@@ -6070,8 +5869,6 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                             (newY - inY) * (newY - inY) );
                    
                     double speed = 4.0f;
-                   
-                   
                     
                     char deadly = false;
                     if( newID > 0 ) {
@@ -7355,188 +7152,7 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     
     dbPut( inX, inY, 0, inID );
     
-    int curObjectID = inEastwardGradientID;                        
 
-    if( inX > inTargetX && inY == inTargetY ) {
-        numRepeat = 0;
-        }
-    else if( inX < inTargetX && inY == inTargetY ) {
-        numRepeat = 1;
-        }
-    else if( inX == inTargetX && inY < inTargetY ) {
-        numRepeat = 2;
-        }
-    else if( inX == inTargetX && inY > inTargetY ) {
-        numRepeat = 3;
-        }
-    else if( inX > inTargetX && inY > inTargetY ) {
-        numRepeat = 4;
-        }
-    else if( inX > inTargetX && inY < inTargetY ) {
-        numRepeat = 5;
-        }
-    else if( inX < inTargetX && inY < inTargetY ) {
-        numRepeat = 6;
-        }
-    else if( inX < inTargetX && inY > inTargetY ) {
-        numRepeat = 7;
-        }
-
-
-    
-    for( int i=0; i<numRepeat; i++ ) {
-        if( curObjectID == 0 ) {
-            break;
-            }
-        TransRecord *flipTrans = getPTrans( curObjectID, curObjectID );
-        
-        if( flipTrans != NULL ) {
-            curObjectID = flipTrans->newTarget;
-            }
-        }
-
-    if( curObjectID == 0 ) {
-        return -1;
-        }
-
-    return curObjectID;
-    }
-
-
-
-
-// returns true if tapout-triggered a +primaryHomeland object
-static char runTapoutOperation( int inX, int inY, 
-                                int inRadiusX, int inRadiusY,
-                                int inSpacingX, int inSpacingY,
-                                int inTriggerID,
-                                char inPlayerHasPrimaryHomeland,
-                                char inIsPost = false ) {
-
-    char returnVal = false;
-    
-    for( int y =  inY - inRadiusY; 
-         y <= inY + inRadiusY; 
-         y += inSpacingY ) {
-    
-        for( int x =  inX - inRadiusX; 
-             x <= inX + inRadiusX; 
-             x += inSpacingX ) {
-            
-            if( inX == x && inY == y ) {
-                // skip center
-                continue;
-                }
-
-            int id = getMapObjectRaw( x, y );
-                    
-            // change triggered by tapout represented by 
-            // tapoutTrigger object getting used as actor
-            // on tapoutTarget
-            TransRecord *t = NULL;
-            
-            int newTarget = -1;
-
-            if( ! inIsPost ) {
-                // last use target signifies what happens in 
-                // same row or column as inX, inY
-                
-                // get eastward
-                t = getPTrans( inTriggerID, id, false, true );
-
-                if( t != NULL ) {
-                    newTarget = t->newTarget;
-                    }
-                
-                if( newTarget > 0 ) {
-                    newTarget = applyTapoutGradientRotate( inX, inY,
-                                                           x, y,
-                                                           newTarget );
-                    }
-                }
-
-            if( newTarget == -1 ) {
-                // not same row or post or last-use-target trans undefined
-                t = getPTrans( inTriggerID, id );
-                
-                if( t != NULL ) {
-                    newTarget = t->newTarget;
-                    }
-                }
-
-            if( newTarget != -1 ) {
-                ObjectRecord *nt = getObject( newTarget );
-                
-                if( strstr( nt->description, "+primaryHomeland" ) != NULL ) {
-                    if( inPlayerHasPrimaryHomeland ) {
-                        // block creation of objects that require 
-                        // +primaryHomeland
-                        // player already has a primary homeland
-                    
-                        newTarget = -1;
-                        }
-                    else {
-                        // created a +primaryHomeland object
-                        returnVal = true;
-                        }
-                    }
-                }
-            
-            if( newTarget != -1 ) {
-                setMapObjectRaw( x, y, newTarget );
-				
-				TransRecord *newDecayT = getMetaTrans( -1, newTarget );
-				
-				timeSec_t mapETA = 0;
-	 
-				if( newDecayT != NULL ) {
-	 
-					// add some random variation to avoid lock-step
-					// especially after a server restart
-					int tweakedSeconds =
-						randSource.getRandomBoundedInt(
-							lrint( newDecayT->autoDecaySeconds * 0.9 ),
-							newDecayT->autoDecaySeconds );
-				   
-					if( tweakedSeconds < 1 ) {
-						tweakedSeconds = 1;
-						}
-					mapETA = MAP_TIMESEC + tweakedSeconds;
-					}
-				else {
-					// no further decay
-					mapETA = 0;
-					}          
-	 
-				setEtaDecay( x, y, mapETA, newDecayT );
-                }
-            }
-        }
-    
-    return returnVal;
-    }
- 
- 
- 
-void setMapObjectRaw( int inX, int inY, int inID ) {
-    dbPut( inX, inY, 0, inID );
-   
- 
-    // global trigger and speech pipe stuff
- 
-    if( inID <= 0 ) {
-        return;
-        }
- 
-    ObjectRecord *o = getObject( inID );
-   
-    if( o == NULL ) {
-        return;
-        }
- 
- 
- 
-/*OHOLMERGE
     
     // allow un-trigger for auto-orient even if tile becomes empty
     
@@ -7578,23 +7194,22 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     char tappedOutPrimaryHomeland = false;
     
 
-*/
     if( o->isFlightLanding ) {
         GridPos p = { inX, inY };
- 
+
         char found = false;
- 
+
         for( int i=0; i<flightLandingPos.size(); i++ ) {
             GridPos otherP = flightLandingPos.getElementDirect( i );
-           
+            
             if( equal( p, otherP ) ) {
-               
+                
                 // make sure this other strip really still exists
                 int oID = getMapObject( otherP.x, otherP.y );
-           
+            
                 if( oID <=0 ||
                     ! getObject( oID )->isFlightLanding ) {
-               
+                
                     // not even a valid landing pos anymore
                     flightLandingPos.deleteElement( i );
                     i--;
@@ -7605,30 +7220,30 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                     }
                 }
             }
-       
+        
         if( !found ) {
             flightLandingPos.push_back( p );
             }
         }
-   
- 
- 
+    
+
+
     if( o->speechPipeIn ) {
         GridPos p = { inX, inY };
-       
-        int foundIndex =
+        
+        int foundIndex = 
             findGridPos( &( speechPipesIn[ o->speechPipeIndex ] ), p );
-       
+        
         if( foundIndex == -1 ) {
             speechPipesIn[ o->speechPipeIndex ].push_back( p );
             }        
         }
     else if( o->speechPipeOut ) {
         GridPos p = { inX, inY };
-       
-        int foundIndex =
+        
+        int foundIndex = 
             findGridPos( &( speechPipesOut[ o->speechPipeIndex ] ), p );
-       
+        
         if( foundIndex == -1 ) {
             speechPipesOut[ o->speechPipeIndex ].push_back( p );
             }
@@ -7636,64 +7251,64 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     else if( o->isGlobalTriggerOn ) {
         GlobalTriggerState *s = globalTriggerStates.getElement(
             o->globalTriggerIndex );
-       
+        
         GridPos p = { inX, inY };
-       
+        
         int foundIndex = findGridPos( &( s->triggerOnLocations ), p );
-       
+        
         if( foundIndex == -1 ) {
             s->triggerOnLocations.push_back( p );
-           
+            
             if( s->triggerOnLocations.size() == 1 ) {
                 // just turned on globally
- 
+
                 /// process all receivers
                 for( int i=0; i<s->receiverLocations.size(); i++ ) {
                     GridPos q = s->receiverLocations.getElementDirect( i );
- 
+
                     int id = getMapObjectRaw( q.x, q.y );
-                   
+                    
                     if( id <= 0 ) {
                         // receiver no longer here
                         s->receiverLocations.deleteElement( i );
                         i--;
                         continue;
                         }
- 
+
                     ObjectRecord *oR = getObject( id );
-                   
+                    
                     if( oR->isGlobalReceiver &&
                         oR->globalTriggerIndex == o->globalTriggerIndex ) {
                         // match
-                       
-                        int metaID = getMetaTriggerObject(
+                        
+                        int metaID = getMetaTriggerObject( 
                             o->globalTriggerIndex );
-                       
+                        
                         if( metaID > 0 ) {
                             TransRecord *tR = getPTrans( metaID, id );
-                           
+                            
                             if( tR != NULL ) {
-                               
+                                
                                 dbPut( q.x, q.y, 0, tR->newTarget );
-                           
+                            
                                 // save this to our "triggered" list
                                 int foundIndex = findGridPos(
                                     &( s->triggeredLocations ), q );
-                               
+                                
                                 if( foundIndex != -1 ) {
                                     // already exists
                                     // replace
-                                    *( s->triggeredIDs.getElement(
+                                    *( s->triggeredIDs.getElement( 
                                            foundIndex ) ) =
                                         tR->newTarget;
-                                    *( s->triggeredRevertIDs.getElement(
+                                    *( s->triggeredRevertIDs.getElement( 
                                            foundIndex ) ) =
                                         tR->target;
                                     }
                                 else {
                                     s->triggeredLocations.push_back( q );
                                     s->triggeredIDs.push_back( tR->newTarget );
-                                    s->triggeredRevertIDs.push_back(
+                                    s->triggeredRevertIDs.push_back( 
                                         tR->target );
                                     }
                                 }
@@ -7712,41 +7327,41 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     else if( o->isGlobalTriggerOff ) {
         GlobalTriggerState *s = globalTriggerStates.getElement(
             o->globalTriggerIndex );
-       
+        
         GridPos p = { inX, inY };
- 
+
         int foundIndex = findGridPos( &( s->triggerOnLocations ), p );
-       
+        
         if( foundIndex != -1 ) {
             s->triggerOnLocations.deleteElement( foundIndex );
-           
+            
             if( s->triggerOnLocations.size() == 0 ) {
                 // just turned off globally, no on triggers left on map
- 
+
                 /// process all triggered elements back to off
- 
+
                 for( int i=0; i<s->triggeredLocations.size(); i++ ) {
                     GridPos q = s->triggeredLocations.getElementDirect( i );
- 
+
                     int curID = getMapObjectRaw( q.x, q.y );
- 
+
                     int triggeredID = s->triggeredIDs.getElementDirect( i );
-                   
+                    
                     if( curID == triggeredID ) {
                         // cell still in triggered state
- 
+
                         // revert it
-                        int revertID =
+                        int revertID = 
                             s->triggeredRevertIDs.getElementDirect( i );
-                       
+                        
                         dbPut( q.x, q.y, 0, revertID );
-                       
+                        
                         // no longer triggered, remove it
                         s->triggeredLocations.deleteElement( i );
                         s->triggeredIDs.deleteElement( i );
                         s->triggeredRevertIDs.deleteElement( i );
                         i--;
-                       
+                        
                         // remember it as a reciever (it has gone back
                         // to being a receiver again)
                         s->receiverLocations.push_back( q );
@@ -7758,42 +7373,42 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
     else if( o->isGlobalReceiver ) {
         GlobalTriggerState *s = globalTriggerStates.getElement(
             o->globalTriggerIndex );
-       
+        
         GridPos p = { inX, inY };
- 
+
         int foundIndex = findGridPos( &( s->receiverLocations ), p );
-       
+        
         if( foundIndex == -1 ) {
             s->receiverLocations.push_back( p );
             }
-       
+        
         if( s->triggerOnLocations.size() > 0 ) {
             // this receiver is currently triggered
-           
+            
             // trigger it now, right away, as soon as it is placed on map
-                                   
+                                    
             int metaID = getMetaTriggerObject( o->globalTriggerIndex );
-                       
+                        
             if( metaID > 0 ) {
                 TransRecord *tR = getPTrans( metaID, inID );
- 
+
                 if( tR != NULL ) {
-                   
+                    
                     dbPut( inX, inY, 0, tR->newTarget );
-                       
+                        
                     GridPos q = { inX, inY };
-                                 
-   
+                                  
+    
                     // save this to our "triggered" list
-                    int foundIndex = findGridPos(
+                    int foundIndex = findGridPos( 
                         &( s->triggeredLocations ), q );
-                   
+                    
                     if( foundIndex != -1 ) {
                         // already exists
                         // replace
                         *( s->triggeredIDs.getElement( foundIndex ) ) =
                             tR->newTarget;
-                        *( s->triggeredRevertIDs.getElement(
+                        *( s->triggeredRevertIDs.getElement( 
                                foundIndex ) ) =
                             tR->target;
                         }
@@ -7898,59 +7513,6 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
             }
         }
     }
-
-
-        char playerHasPrimaryHomeland = false;
-        
-        if( currentResponsiblePlayer != -1 ) {
-            int pID = currentResponsiblePlayer;
-            if( pID < 0 ) {
-                pID = -pID;
-                }
-			//primaryHomeland is not in 2HOL
-            // int lineage = getPlayerLineage( pID );
-            
-            // if( lineage != -1 ) {
-                // playerHasPrimaryHomeland = hasPrimaryHomeland( lineage );
-                // }
-            }
-        
-        // don't make current player responsible for all these changes
-        int restoreResponsiblePlayer = currentResponsiblePlayer;
-        currentResponsiblePlayer = -1;        
-        
-        TapoutRecord *r = getTapoutRecord( inID );
-        
-        if( r != NULL ) {
-			
-			char tappedOutPrimaryHomeland = false; //primaryHomeland is not in 2HOL
-
-            tappedOutPrimaryHomeland = 
-            runTapoutOperation( inX, inY, 
-                                r->limitX, r->limitY,
-                                r->gridSpacingX, r->gridSpacingY, 
-                                inID,
-                                playerHasPrimaryHomeland );
-            
-            
-            r->buildCount++;
-            
-            if( r->buildCountLimit != -1 &&
-                r->buildCount >= r->buildCountLimit ) {
-                // hit limit!
-                // tapout a larger radius now
-                tappedOutPrimaryHomeland =
-                runTapoutOperation( inX, inY, 
-                                    r->postBuildLimitX, r->postBuildLimitY,
-                                    r->gridSpacingX, r->gridSpacingY, 
-                                    inID, 
-                                    playerHasPrimaryHomeland, true );
-                }
-            }
-        
-        currentResponsiblePlayer = restoreResponsiblePlayer;
-        }
-    }
  
  
  
@@ -7985,7 +7547,7 @@ static void logMapChange( int inX, int inY, int inID ) {
         if( o != NULL && o->isUseDummy ) {
             fprintf( mapChangeLogFile, 
                      "%.2f %d %d %s%du%d %d\n",
-                     timeDelta,
+                     timeDelta,//Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
                      extraFlag,
                      o->useDummyParent,
@@ -7995,7 +7557,7 @@ static void logMapChange( int inX, int inY, int inID ) {
         else if( o != NULL && o->isVariableDummy ) {
             fprintf( mapChangeLogFile, 
                      "%.2f %d %d %s%dv%d %d\n", 
-                     timeDelta,
+                     timeDelta,//Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
                      extraFlag,
                      o->variableDummyParent,
@@ -8005,7 +7567,7 @@ static void logMapChange( int inX, int inY, int inID ) {
         else {        
             fprintf( mapChangeLogFile, 
                      "%.2f %d %d %s%d %d\n", 
-                     timeDelta,
+                     timeDelta,//Time::getCurrentTime() - mapChangeLogTimeStart,
                      inX, inY,
                      extraFlag,
                      inID,
@@ -9769,12 +9331,12 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
  
  
  
-static double distSquared( GridPos inA, GridPos inB ) {
-    double xDiff = (double)inA.x - (double)inB.x;
-    double yDiff = (double)inA.y - (double)inB.y;
-   
-    return xDiff * xDiff + yDiff * yDiff;
-    }
+//static double distSquared( GridPos inA, GridPos inB ) {
+//    double xDiff = (double)inA.x - (double)inB.x;
+//    double yDiff = (double)inA.y - (double)inB.y;
+//   
+//    return xDiff * xDiff + yDiff * yDiff;
+//    }
  
  
  

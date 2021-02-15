@@ -254,6 +254,7 @@ int passwordSilent = 0;
 
 static SimpleVector<char*> passwordSettingPhrases;
 static SimpleVector<char*> passwordInvokingPhrases;
+
 static SimpleVector<char*> familyGivingPhrases;
 static SimpleVector<char*> offspringGivingPhrases;
 
@@ -280,6 +281,7 @@ static SimpleVector<char*> namedAfterKillPhrases;
 static int nextOrderNumber = 1;
 
 static char *orderPhrase = NULL;
+
 
 static SimpleVector<char*> infertilityDeclaringPhrases;
 static SimpleVector<char*> fertilityDeclaringPhrases;
@@ -2358,10 +2360,11 @@ void quitCleanup() {
 	infertilityDeclaringPhrases.deallocateStringElements();
 	fertilityDeclaringPhrases.deallocateStringElements();
     
+
     //2HOL, password-protected objects: maintenance
     passwordSettingPhrases.deallocateStringElements();
     passwordInvokingPhrases.deallocateStringElements();
-	
+
     familyGivingPhrases.deallocateStringElements();
     offspringGivingPhrases.deallocateStringElements();
     
@@ -6383,28 +6386,6 @@ static void forceObjectToRead( LiveObject *inPlayer,
         }
     }
 
-static void holdingSomethingNew( LiveObject *inPlayer, 
-                                 int inOldHoldingID = 0 ) {
-    if( inPlayer->holdingID > 0 ) {
-       
-        ObjectRecord *o = getObject( inPlayer->holdingID );
-        
-        ObjectRecord *oldO = NULL;
-        if( inOldHoldingID > 0 ) {
-            oldO = getObject( inOldHoldingID );
-            }
-        
-        if( o->written &&
-            ( oldO == NULL ||
-              ! ( oldO->written || oldO->writable ) ) ) {
-
-            forcePlayerToRead( inPlayer, inPlayer->holdingID );
-            }
-        char *quotedPhrase = autoSprintf( ":%s", metaData );
-        makePlayerSay( inPlayer, quotedPhrase );
-        delete [] quotedPhrase;
-        }
-    }
 
 
 
@@ -6495,7 +6476,6 @@ void handleDrop( int inX, int inY, LiveObject *inDroppingPlayer,
 
 void makePlayerBiomeSick( LiveObject *nextPlayer, 
                           int sicknessObjectID );
-
 
 
 static void holdingSomethingNew( LiveObject *inPlayer, 
@@ -8188,6 +8168,7 @@ static void triggerApocalypseNow( const char *inMessage ) {
 
 
 
+
 static void setupToolSlots( LiveObject *inPlayer ) {
     int min = SettingsManager::getIntSetting( "baseToolSlotsPerPlayer", 6 );
     int max = SettingsManager::getIntSetting( "maxToolSlotsPerPlayer", 12 );
@@ -8235,19 +8216,6 @@ static void setupToolSlots( LiveObject *inPlayer ) {
         lrint( A * ( B * pow( (s/60), D ) + C * (s/60) ) + E );
 
 
-// returns ID of new player,
-// or -1 if this player reconnected to an existing ID
-int processLoggedInPlayer( char inAllowReconnect,
-                           Socket *inSock,
-                           SimpleVector<char> *inSockBuffer,
-                           char *inEmail,
-                           uint32_t hashedSpawnSeed,
-                           int inTutorialNumber,
-                           CurseStatus inCurseStatus,
-                           // set to -2 to force Eve
-                           int inForceParentID = -1,
-                           int inForceDisplayID = -1,
-                           GridPos *inForcePlayerPos = NULL ) {
     const char *slotWord = "SLOTS";
         
     if( abs( slots - min ) == 1 ) {
@@ -8450,6 +8418,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                            Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
+                           uint32_t hashedSpawnSeed,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
                            PastLifeStats inLifeStats,
@@ -8858,15 +8827,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     int numOfAge = 0;
 
-        if( player->isTutorial ) {
-            continue;
-            }
-      
-        //skips over solo players who declare themselves infertile
-		    if( !player->fertile ) {
-			    	continue;
-				    }
-	
+            
     int maxLivingChildrenPerMother = 
         SettingsManager::getIntSetting( "maxLivingChildrenPerMother", 4 );
     
@@ -8894,6 +8855,11 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             if( player->isTutorial ) {
                 continue;
                 }
+                      
+            //skips over solo players who declare themselves infertile
+    		    if( !player->fertile ) {
+    			    	continue;
+    				    }
             
             if( player->vogMode ) {
                 continue;
@@ -9220,15 +9186,15 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 i--;
                 }
             }
-        
+            
+        AppLog::infoF( "Filtering %d mothers for weakest race %d, and %d match",
+                       preFilterCount, weakRace, parentChoices.size() );
         }
+    
     
     if( hashedSpawnSeed != 0 && SettingsManager::getIntSetting( "forceEveOnSeededSpawn", 0 ) ) {
         parentChoices.deleteAll();
-        forceParentChoices = true;
-
-        AppLog::infoF( "Filtering %d mothers for weakest race %d, and %d match",
-                       preFilterCount, weakRace, parentChoices.size() );
+        //forceParentChoices = true; //2HOL MERGE
         }
 
 
@@ -11111,7 +11077,6 @@ static char containmentPermitted( int inContainerID, int inContainedID ) {
         }
     
     char *limitNameLoc = &( contLoc[5] );
-
     
     if( limitNameLoc[0] != ' ' &&
         limitNameLoc[0] != '\0' ) {
@@ -12432,6 +12397,7 @@ char *isPasswordSettingSay( char *inSaidString ) {
 char *isPasswordInvokingSay( char *inSaidString ) {
     return isNamingSay( inSaidString, &passwordInvokingPhrases );
     }
+    
 
 
 char isYouGivingSay( char *inSaidString ) {
@@ -15380,7 +15346,6 @@ static void tryToForceDropHeld(
 
     
 
-
 // access blocked b/c of access direction or ownership?
 static char isAccessBlocked( LiveObject *inPlayer, 
                              int inTargetX, int inTargetY,
@@ -15394,6 +15359,9 @@ static char isAccessBlocked( LiveObject *inPlayer,
 
     char wrongSide = false;
     char ownershipBlocked = false;
+    
+  	//2HOL additions for: password-protected objects
+  	char blockedByPassword = false;
     
     if( target > 0 ) {
         ObjectRecord *targetObj = getObject( target );
@@ -15529,8 +15497,46 @@ static char isAccessBlocked( LiveObject *inPlayer,
                     }
                 }
             }
+        
+        
+    		//2HOL additions for: password-protected objects
+    		//the check to block the transition for the object which password was not guessed correctly
+    		if( passwordTransitionsAllowed && targetObj->canHaveInGamePassword ) {
+    			// AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
+    			// AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
+    			// AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", x );
+    			// AppLog::infoF( "2HOL DEBUG: interaction location, y: %i", y );
+    			for( int i=0; i<targetObj->IndX.size(); i++ ) {
+    				if ( x == targetObj->IndX.getElementDirect(i) && y == targetObj->IndY.getElementDirect(i) ) {
+    					// AppLog::infoF( "2HOL DEBUG: protected tile #%i, password: %s", i, targetObj->IndPass.getElementDirect(i) );
+    					if ( inPlayer->saidPassword == NULL ) {
+    							// AppLog::infoF( "2HOL DEBUG: player didn't say any password." );
+    							blockedByPassword = true;
+    					}
+    					else {
+    						// AppLog::infoF( "2HOL DEBUG: player's password: %s", inPlayer->saidPassword );
+    						std::string tryPw( inPlayer->saidPassword );
+    						std::string truePw( targetObj->IndPass.getElementDirect(i) );
+    						bool pass = tryPw.compare(truePw) == 0;
+    						if ( pass ) {
+    							// AppLog::infoF( "2HOL DEBUG: passwords match." );
+    							blockedByPassword = false;
+    							}
+    						else {
+    							// AppLog::infoF( "2HOL DEBUG: passwords do not match." );
+    							blockedByPassword = true;
+    							}
+    						}
+    						break;
+    					}
+    				}
+    			// 2HOL, password-protected objects: or for which the password was not guessed
+    			if ( blockedByPassword ) {
+    				 // AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
+    				}
+    			}
         }
-    return wrongSide || ownershipBlocked;
+    return wrongSide || ownershipBlocked || blockedByPassword;
     }
 
 
@@ -16891,88 +16897,6 @@ static void sendCraving( LiveObject *inPlayer ) {
 
     
     
-// access blocked b/c of access direction or ownership?
-static char isAccessBlocked( LiveObject *inPlayer, 
-                             int inTargetX, int inTargetY,
-                             int inTargetID ) {
-    int target = inTargetID;
-    
-    int x = inTargetX;
-    int y = inTargetY;
-    
-
-    char wrongSide = false;
-    char ownershipBlocked = false;
-	//2HOL additions for: password-protected objects
-	char blockedByPassword = false;
-    
-    if( target > 0 ) {
-        ObjectRecord *targetObj = getObject( target );
-
-        if( isGridAdjacent( x, y,
-                            inPlayer->xd, 
-                            inPlayer->yd ) ) {
-            
-            if( targetObj->sideAccess ) {
-                
-                if( y > inPlayer->yd ||
-                    y < inPlayer->yd ) {
-                    // access from N or S
-                    wrongSide = true;
-                    }
-                }
-            else if( targetObj->noBackAccess ) {
-                if( y < inPlayer->yd ) {
-                    // access from N
-                    wrongSide = true;
-                    }
-                }
-            }
-        if( targetObj->isOwned ) {
-            // make sure player owns this pos
-            ownershipBlocked = 
-                ! isOwned( inPlayer, x, y );
-            }
-			
-		//2HOL additions for: password-protected objects
-		//the check to block the transition for the object which password was not guessed correctly
-		if( passwordTransitionsAllowed && targetObj->canHaveInGamePassword ) {
-			// AppLog::infoF( "2HOL DEBUG: attempt to interact with an object potentially having password" );
-			// AppLog::infoF( "2HOL DEBUG: there are %i protected tiles with object ID %i in the world", targetObj->IndX.size(), targetObj->id );
-			// AppLog::infoF( "2HOL DEBUG: interaction location, x: %i", x );
-			// AppLog::infoF( "2HOL DEBUG: interaction location, y: %i", y );
-			for( int i=0; i<targetObj->IndX.size(); i++ ) {
-				if ( x == targetObj->IndX.getElementDirect(i) && y == targetObj->IndY.getElementDirect(i) ) {
-					// AppLog::infoF( "2HOL DEBUG: protected tile #%i, password: %s", i, targetObj->IndPass.getElementDirect(i) );
-					if ( inPlayer->saidPassword == NULL ) {
-							// AppLog::infoF( "2HOL DEBUG: player didn't say any password." );
-							blockedByPassword = true;
-					}
-					else {
-						// AppLog::infoF( "2HOL DEBUG: player's password: %s", inPlayer->saidPassword );
-						std::string tryPw( inPlayer->saidPassword );
-						std::string truePw( targetObj->IndPass.getElementDirect(i) );
-						bool pass = tryPw.compare(truePw) == 0;
-						if ( pass ) {
-							// AppLog::infoF( "2HOL DEBUG: passwords match." );
-							blockedByPassword = false;
-							}
-						else {
-							// AppLog::infoF( "2HOL DEBUG: passwords do not match." );
-							blockedByPassword = true;
-							}
-						}
-						break;
-					}
-				}
-			// 2HOL, password-protected objects: or for which the password was not guessed
-			if ( blockedByPassword ) {
-				 // AppLog::infoF( "2HOL DEBUG: attempt to interact was blocked: wrong password." );
-				}
-			}
-        }
-    return wrongSide || ownershipBlocked || blockedByPassword;
-    }
 	
 	
 
@@ -17187,7 +17111,7 @@ int main() {
 	strFertilitySuffix = " " + strFertilitySuffix;
 	infertilitySuffix = strdup( strInfertilitySuffix.c_str() );
 	fertilitySuffix = strdup( strFertilitySuffix.c_str() );
-	
+  
     curseYouPhrase = 
         SettingsManager::getSettingContents( "curseYouPhrase", 
                                              "CURSE YOU" );
@@ -18349,38 +18273,38 @@ int main() {
                                     // FNV-1a Hashing algorithm
                                     auto hashStr = [](std::string &s, const uint32_t FNV_init = 2166136261u){
                                         const size_t FNV_prime = 111337;
-
                                         // Hash seed to 4 byte int
                                         uint32_t hash = FNV_init;
                                         for( auto c : s ) {
                                             hash ^= c;
                                             hash *= FNV_prime;
-                                        }
-
+                                            }
                                         return hash;
-                                    };
+                                        };
 
                                     // Get the substr from one after the seed delim
                                     std::string seed { emailAndSeed.substr( seedDelimPos + 1 ) };
                                     std::string seedSalt { SettingsManager::getStringSetting("seedSalt", "default salt") };
 
                                     nextConnection->hashedSpawnSeed =
-                                        hashStr(seed, hashStr(seedSalt));
-                                }
+                                    hashStr(seed, hashStr(seedSalt));
+                                    }
 
                                 // Remove seed from email
                                 if( seedDelimPos == 0) {
                                     // There was only a seed not email
                                     nextConnection->email = stringDuplicate( "blank_email" );
-                                } else {
+                                    }
+                                else {
                                     std::string onlyEmail { emailAndSeed.substr( 0, seedDelimPos ) };
 
                                     delete[] nextConnection->email;
                                     nextConnection->email = stringDuplicate( onlyEmail.c_str() );
-                                }
-                            } else {
-                                nextConnection->hashedSpawnSeed = 0;
+                                    }
                             }
+                            else {
+                                nextConnection->hashedSpawnSeed = 0;
+                                }
 
                             char *pwHash = tokens->getElementDirect( 2 );
                             char *keyHash = tokens->getElementDirect( 3 );
@@ -19071,45 +18995,43 @@ int main() {
                               nextPlayer->xd + 8, nextPlayer->yd + 7 );
                 nextPlayer->lastRegionLookTime = curLookTime;
                 }
-				
-			//2HOL mechanics to read written objects
-			GridPos playerPos;
-			if( nextPlayer->xs == nextPlayer->xd && nextPlayer->ys == nextPlayer->yd ) {
-				playerPos.x = nextPlayer->xd;
-				playerPos.y = nextPlayer->yd;
-			} else {
-				playerPos = computePartialMoveSpot( nextPlayer );
-			}
-			
-			float readRange = 3.0;
-			
-			//Remove positions already read when players get out of range and speech bubbles are expired 
-			for( int j = nextPlayer->readPositions.size() - 1; j >= 0; j-- ) {
-				GridPos p = nextPlayer->readPositions.getElementDirect( j );
-				double eta = nextPlayer->readPositionsETA.getElementDirect( j );
-				if( 
-					distance( p, playerPos ) > readRange && 
-					Time::getCurrentTime() > eta
-					) {
-					nextPlayer->readPositions.deleteElement( j );
-					nextPlayer->readPositionsETA.deleteElement( j );
-				}
-			}
-			
-			//Scan area around players for pass-to-read objects
-			for( int dx = -3; dx <= 3; dx++ ) {
-				for( int dy = -3; dy <= 3; dy++ ) {
-					float dist = sqrt(dx * dx + dy * dy);
-					if( dist > readRange ) continue;
-					int objId = getMapObject( playerPos.x + dx, playerPos.y + dy );
-					if( objId <= 0 ) continue;
-					ObjectRecord *obj = getObject( objId );
-					if( obj != NULL && obj->written && obj->passToRead ) {
-						GridPos readPos = { playerPos.x + dx, playerPos.y + dy };
-						forceObjectToRead( nextPlayer, objId, readPos, true );
-					}
-				}
-			}
+      				
+      			//2HOL mechanics to read written objects
+      			GridPos playerPos;
+      			if( nextPlayer->xs == nextPlayer->xd && nextPlayer->ys == nextPlayer->yd ) {
+      			    playerPos.x = nextPlayer->xd;
+      			    playerPos.y = nextPlayer->yd;
+                }
+            else {
+      			    playerPos = computePartialMoveSpot( nextPlayer );
+      			     }
+      			
+      			float readRange = 3.0;
+      			
+      			//Remove positions already read when players get out of range and speech bubbles are expired 
+      			for( int j = nextPlayer->readPositions.size() - 1; j >= 0; j-- ) {
+      			    GridPos p = nextPlayer->readPositions.getElementDirect( j );
+      		      double eta = nextPlayer->readPositionsETA.getElementDirect( j );
+      		      if( distance( p, playerPos ) > readRange && Time::getCurrentTime() > eta ) {
+                    nextPlayer->readPositions.deleteElement( j );
+                    nextPlayer->readPositionsETA.deleteElement( j );
+      			        }
+      	         }
+      			
+      			//Scan area around players for pass-to-read objects
+            for( int dx = -3; dx <= 3; dx++ ) {
+                 for( int dy = -3; dy <= 3; dy++ ) {
+                      float dist = sqrt(dx * dx + dy * dy);
+                      if( dist > readRange ) continue;
+                      int objId = getMapObject( playerPos.x + dx, playerPos.y + dy );
+            					if( objId <= 0 ) continue;
+            					ObjectRecord *obj = getObject( objId );
+            					if( obj != NULL && obj->written && obj->passToRead ) {
+          						GridPos readPos = { playerPos.x + dx, playerPos.y + dy };
+          						forceObjectToRead( nextPlayer, objId, readPos, true );
+                          }
+                      }
+                 }
 
             char *message = NULL;
             
@@ -19142,17 +19064,13 @@ int main() {
                 //Thread::staticSleep( 
                 //    testRandSource.getRandomBoundedInt( 0, 450 ) );
                 
-                
                 // GOTO below jumps here if we need to reparse the message
                 // as a different type
                 RESTART_MESSAGE_ACTION:
-                
                 if( m.type == UNKNOWN ) {
                     AppLog::info( "Client error, unknown message type." );
-                    
-                    //setPlayerDisconnected( nextPlayer, 
+                    //setPlayerDisconnected( nextPlayer,
                     //                       "Unknown message type" );
-                    
                     // do not disconnect client here
                     // keep server flexible, so client can be updated
                     // with a protocol change before the server gets updated
@@ -21672,16 +21590,16 @@ int main() {
                                 if( name != NULL && strcmp( name, "" ) != 0 ) {
                                     nameBaby( nextPlayer, babyO, name,
                                               &playerIndicesToSendNamesAbout );
-									
-									if ( babyO->displayedName != NULL ) delete [] babyO->displayedName;
-									if ( !babyO->fertile ) {
-										std::string strName(babyO->name);
-										strName += strInfertilitySuffix;
-										babyO->displayedName = strdup( strName.c_str() );
-										} 
-									else {
-										babyO->displayedName = strdup( babyO->name );
-										}
+
+                                if ( babyO->displayedName != NULL ) delete [] babyO->displayedName;
+                                    if ( !babyO->fertile ) {
+                                    std::string strName(babyO->name);
+                                    strName += strInfertilitySuffix;
+                                    babyO->displayedName = strdup( strName.c_str() );
+                                    } 
+                                else {
+                                    babyO->displayedName = strdup( babyO->name );
+                                }
                                     replaceNameInSaidPhrase( name,
                                                              &( m.saidText ),
                                                              babyO );
@@ -21702,6 +21620,21 @@ int main() {
                                                            babyAge, true );
 
                                 if( closestOther != NULL ) {
+/*------- HEAD
+                                    nameBaby( nextPlayer, closestOther,
+                                              name, 
+                                              &playerIndicesToSendNamesAbout );
+									
+									if ( closestOther->displayedName != NULL ) delete [] closestOther->displayedName;
+									if ( !closestOther->fertile ) {
+										std::string strName(closestOther->name);
+										strName += strInfertilitySuffix;
+										closestOther->displayedName = strdup( strName.c_str() );
+										} 
+									else {
+										closestOther->displayedName = strdup( closestOther->name );
+										}
+-------*/
                                     
                                     if( closestOther->isEve ) {
                                         
@@ -21993,6 +21926,7 @@ int main() {
                             // no diags
                             
 
+                            //int target = getMapObject( m.x, m.y );
                             
                             ObjectRecord *targetObj = NULL;
                             if( target != 0 ) {
@@ -22008,202 +21942,200 @@ int main() {
                                 targetObj = NULL;
                                 target = 0;
                                 }
-                            
+                                
 
-                            int oldHolding = nextPlayer->holdingID;
-                            
-                            char accessBlocked =
-                                isAccessBlocked( nextPlayer, m.x, m.y, target,
-                                                 oldHolding );
-                            
-                            if( accessBlocked ) {
-                                // ignore action from wrong side
-                                // or that players don't own
+                                int oldHolding = nextPlayer->holdingID;
+                                
+                                char accessBlocked =
+                                    isAccessBlocked( nextPlayer, m.x, m.y, target,
+                                                     oldHolding );
+                                
+                                if( accessBlocked ) {
+                                    // ignore action from wrong side
+                                    // or that players don't own
 
+                                    }
+                                else if( nextPlayer->dying ) {
+
+                                bool healed = false;
+
+                                // try healing wound
+
+                                TransRecord *healTrans =
+                                getMetaTrans( nextPlayer->holdingID,
+                                target );
+
+                                int healTarget = 0;
+
+                                if( healTrans != NULL ) {
+
+                                    nextPlayer->holdingID = 
+                                    healTrans->newActor;
+                                    holdingSomethingNew( nextPlayer );
+
+                                    // their wound has been changed
+                                    // no longer track embedded weapon
+                                    nextPlayer->embeddedWeaponID = 0;
+                                    nextPlayer->embeddedWeaponEtaDecay = 0;
+
+                                    setMapObject( m.x, m.y,
+                                    healTrans->newTarget );
+
+                                    setResponsiblePlayer( -1 );
+
+                                    healed = true;
+                                    healTarget = healTrans->target;
+
+                                    }
+                                else {
+
+                                    ObjectRecord *targetObj = getObject( target );
+
+                                    if( targetObj != NULL )
+                                    if( m.i != -1 && targetObj->permanent &&
+                                        targetObj->numSlots > m.i &&
+                                        getNumContained( m.x, m.y ) > m.i &&
+                                        strstr( targetObj->description,
+                                        "+useOnContained" ) != NULL ) {
+                                    // a valid slot specified to use
+                                    // held object on.
+                                    // AND container allows this
+
+                                    int contTarget = 
+                                    getContained( m.x, m.y, m.i );
+
+                                    char isSubCont = false;
+                                    if( contTarget < 0 ) {
+                                        contTarget = -contTarget;
+                                        isSubCont = true;
+                                        }
+
+                                    ObjectRecord *contTargetObj =
+                                    getObject( contTarget );
+
+                                    TransRecord *contTrans =
+                                    getPTrans( nextPlayer->holdingID,
+                                    contTarget );
+
+                                    ObjectRecord *newTarget = NULL;
+
+                                    if( ! isSubCont &&
+                                        contTrans != NULL &&
+                                        ( contTrans->newActor == 
+                                        nextPlayer->holdingID ||
+                                        contTrans->newActor == 0 ||
+                                        canPickup( 
+                                        contTrans->newActor,
+                                        computeAge( 
+                                        nextPlayer ) ) ) ) {
+
+                                        // a trans applies, and we
+                                        // can hold the resulting actor
+                                        if( contTrans->newTarget > 0 ) {
+                                            newTarget = getObject( contTrans->newTarget );
+                                            }
+                                        }
+                                    if( newTarget != NULL &&
+                                        isContainable( 
+                                        contTrans->newTarget ) &&
+                                        newTarget->containSize <=
+                                        targetObj->slotSize &&
+                                        containmentPermitted(
+                                        targetObj->id,
+                                        newTarget->id ) ) {
+
+                                    int oldHeld = 
+                                    nextPlayer->holdingID;
+
+                                    handleHoldingChange( 
+                                        nextPlayer,
+                                        contTrans->newActor );
+
+                                    nextPlayer->heldOriginValid = 0;
+                                    nextPlayer->heldOriginX = 0;
+                                    nextPlayer->heldOriginY = 0;
+                                    nextPlayer->
+                                    heldTransitionSourceID = 0;
+
+                                    if( contTrans->newActor > 0 && 
+                                        contTrans->newActor !=
+                                        oldHeld ) {
+
+                                        nextPlayer->heldTransitionSourceID = contTargetObj->id;
+                                        }
+
+
+                                    setResponsiblePlayer( - nextPlayer->id );
+
+                                    changeContained( 
+                                        m.x, m.y,
+                                        m.i, 
+                                        contTrans->newTarget );
+
+                                    setResponsiblePlayer( -1 );
+
+                                    healed = true;
+                                    healTarget = contTarget;
+
+                                    }
                                 }
-							else if( nextPlayer->dying ) {
-								
-								bool healed = false;
-									
-								// try healing wound
-								
-								TransRecord *healTrans =
-									getMetaTrans( nextPlayer->holdingID,
-												  target );
-								
-								int healTarget = 0;
+                                    }
 
-								if( healTrans != NULL ) {
-									
-									nextPlayer->holdingID = 
-										healTrans->newActor;
-									holdingSomethingNew( nextPlayer );
-									
-									// their wound has been changed
-									// no longer track embedded weapon
-									nextPlayer->embeddedWeaponID = 0;
-									nextPlayer->embeddedWeaponEtaDecay = 0;
-									
-									setMapObject( m.x, m.y,
-												  healTrans->newTarget );
-									
-									setResponsiblePlayer( -1 );
-									
-									healed = true;
-									healTarget = healTrans->target;
-									
-									}
-								else {
-									
-									ObjectRecord *targetObj = getObject( target );
-									
-									if( targetObj != NULL )
-									if( m.i != -1 && targetObj->permanent &&
-										targetObj->numSlots > m.i &&
-										getNumContained( m.x, m.y ) > m.i &&
-										strstr( targetObj->description,
-												"+useOnContained" ) != NULL ) {
-										// a valid slot specified to use
-										// held object on.
-										// AND container allows this
-										
-										int contTarget = 
-											getContained( m.x, m.y, m.i );
-										
-										char isSubCont = false;
-										if( contTarget < 0 ) {
-											contTarget = -contTarget;
-											isSubCont = true;
-											}
+                            if ( healed ) {
 
-										ObjectRecord *contTargetObj =
-											getObject( contTarget );
-										
-										TransRecord *contTrans =
-											getPTrans( nextPlayer->holdingID,
-													   contTarget );
-										
-										ObjectRecord *newTarget = NULL;
-										
-										if( ! isSubCont &&
-											contTrans != NULL &&
-											( contTrans->newActor == 
-											  nextPlayer->holdingID ||
-											  contTrans->newActor == 0 ||
-											  canPickup( 
-												  contTrans->newActor,
-												  computeAge( 
-													  nextPlayer ) ) ) ) {
+                                nextPlayer->heldOriginValid = 0;
+                                nextPlayer->heldOriginX = 0;
+                                nextPlayer->heldOriginY = 0;
+                                nextPlayer->heldTransitionSourceID = 
+                                healTarget;
 
-											// a trans applies, and we
-											// can hold the resulting actor
-											if( contTrans->newTarget > 0 ) {
-												newTarget = getObject(
-													contTrans->newTarget );
-												}
-											}
-										if( newTarget != NULL &&
-											isContainable( 
-												contTrans->newTarget ) &&
-											newTarget->containSize <=
-											targetObj->slotSize &&
-											containmentPermitted(
-												targetObj->id,
-												newTarget->id ) ) {
-												
-											int oldHeld = 
-												nextPlayer->holdingID;
-											
-											handleHoldingChange( 
-												nextPlayer,
-												contTrans->newActor );
-											
-											nextPlayer->heldOriginValid = 0;
-											nextPlayer->heldOriginX = 0;
-											nextPlayer->heldOriginY = 0;
-											nextPlayer->
-												heldTransitionSourceID = 0;
-											
-											if( contTrans->newActor > 0 && 
-												contTrans->newActor !=
-												oldHeld ) {
-												
-												nextPlayer->
-													heldTransitionSourceID
-													= contTargetObj->id;
-												}
+                                if( nextPlayer->holdingID == 0 ) {
+                                    // not dying anymore
+                                    setNoLongerDying( 
+                                    nextPlayer,
+                                    &playerIndicesToSendHealingAbout );
+                                    }
+                                else {
+                                    // wound changed?
 
-											
-											setResponsiblePlayer( 
-												- nextPlayer->id );
-											
-											changeContained( 
-												m.x, m.y,
-												m.i, 
-												contTrans->newTarget );
-											
-											setResponsiblePlayer( -1 );
-											
-											healed = true;
-											healTarget = contTarget;
+                                    ForcedEffects e = 
+                                    checkForForcedEffects( 
+                                    nextPlayer->holdingID );
 
-											}
-										}
-									}
-								
-								if ( healed ) {
-									
-									nextPlayer->heldOriginValid = 0;
-									nextPlayer->heldOriginX = 0;
-									nextPlayer->heldOriginY = 0;
-									nextPlayer->heldTransitionSourceID = 
-										healTarget;
-									
-									if( nextPlayer->holdingID == 0 ) {
-										// not dying anymore
-										setNoLongerDying( 
-											nextPlayer,
-											&playerIndicesToSendHealingAbout );
-										}
-									else {
-										// wound changed?
-
-										ForcedEffects e = 
-											checkForForcedEffects( 
-												nextPlayer->holdingID );
-
-										if( e.emotIndex != -1 ) {
-											nextPlayer->emotFrozen = true;
-											newEmotPlayerIDs.push_back( 
-												nextPlayer->id );
-											newEmotIndices.push_back( 
-												e.emotIndex );
-											newEmotTTLs.push_back( e.ttlSec );
-											interruptAnyKillEmots( 
-												nextPlayer->id, e.ttlSec );
-											}
-										if( e.foodCapModifier != 1 ) {
-											nextPlayer->foodCapModifier = 
-												e.foodCapModifier;
-											nextPlayer->foodUpdate = true;
-											}
-										if( e.feverSet ) {
-											nextPlayer->fever = e.fever;
-											}
-										}
-									}
-								}
-                            else if( target != 0 ) {
+                                    if( e.emotIndex != -1 ) {
+                                        nextPlayer->emotFrozen = true;
+                                        newEmotPlayerIDs.push_back( 
+                                        nextPlayer->id );
+                                        newEmotIndices.push_back( 
+                                        e.emotIndex );
+                                        newEmotTTLs.push_back( e.ttlSec );
+                                        interruptAnyKillEmots( 
+                                        nextPlayer->id, e.ttlSec );
+                                        }
+                                    if( e.foodCapModifier != 1 ) {
+                                        nextPlayer->foodCapModifier = 
+                                        e.foodCapModifier;
+                                        nextPlayer->foodUpdate = true;
+                                        }
+                                    if( e.feverSet ) {
+                                        nextPlayer->fever = e.fever;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            
+                            else if( targetObj != NULL ) {
 
                                 ObjectRecord *targetObj = getObject( target );
-								
+
                                 //2HOL mechanics to read written objects
-								if( targetObj->written &&
+                                if( targetObj->written &&
                                     targetObj->clickToRead ) {
-									GridPos readPos = { m.x, m.y };
+                                    GridPos readPos = { m.x, m.y };
                                     forceObjectToRead( nextPlayer, target, readPos, false );
-                            else if( targetObj != NULL ) {
-                                
+                                    }
+                            
                                 // see if target object is permanent
                                 // and has writing on it.
                                 // if so, read by touching it
@@ -22633,7 +22565,7 @@ int main() {
                                         r = NULL;
                                         }
                                     }
-
+                                  
                                 if( r == NULL && 
                                     ( nextPlayer->holdingID != 0 || 
                                       targetObj->permanent ) &&
@@ -23106,6 +23038,7 @@ int main() {
                                                   target );
                                     }         
                                 else if( nextPlayer->holdingID >= 0 ) {
+
                                     
                                     char handled = false;
                                     
@@ -24597,7 +24530,7 @@ int main() {
                             getObject( nextPlayer->holdingID )->permanent ) {
                             canDrop = false;
                             }
-
+                            
                         int target = getMapObject( m.x, m.y );
                         
                         
@@ -24757,6 +24690,10 @@ int main() {
                                             // can treat it like a swap
 
                                     
+                                            //2HOL MERGE
+                                            //if( ! targetObj->permanent 
+                                            //    && getObject( targetObj->id )->minPickupAge < computeAge( nextPlayer ) ) {
+
                                             if( ! targetObj->permanent
                                                 &&
                                                 canPickup( 
@@ -24985,10 +24922,7 @@ int main() {
 									}
 								}
 
-                            char accessBlocked =
-                                isAccessBlocked( nextPlayer, m.x, m.y, target );
                             
-                            int target = getMapObject( m.x, m.y );
 
                             char accessBlocked =
                                 isAccessBlocked( nextPlayer, m.x, m.y, target );
@@ -29959,7 +29893,6 @@ int main() {
     }
 
 
-
 // implement null versions of these to allow a headless build
 // we never call drawObject, but we need to use other objectBank functions
 
@@ -30082,4 +30015,3 @@ void stopOutputAllFrames() {
 char realSpriteBank() {
     return false;
     }
-

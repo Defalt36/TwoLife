@@ -22065,6 +22065,14 @@ int main( int inNumArgs, const char **inArgs ) {
                             // else just use standard grave
                             }
                         }
+						else {
+							nextPlayer->suicide = true;
+
+							setDeathReason( nextPlayer, "suicide" );
+
+							nextPlayer->error = true;
+							nextPlayer->errorCauseString = "Suicide";
+							}
                     }
                 else if( m.type == GRAVE ) {
                     // immediately send GO response

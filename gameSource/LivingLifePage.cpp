@@ -19603,6 +19603,35 @@ void LivingLifePage::step() {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonSID" ) );
                             }
+                        else if( strcmp( reasonString, "suicide" ) == 0 ) {
+                            ObjectRecord *holdingO = NULL;
+                            
+                            if( ourLiveObject->holdingID > 0 ) {
+                                holdingO = getObject( ourLiveObject->holdingID );
+                                }
+							
+                            if( holdingO == NULL ) {
+                                mDeathReason = autoSprintf( 
+                                    "%s%s",
+                                    translate( "reasonKilled" ),
+                                    translate( "you" ) );
+                                }
+                            else {
+
+                                char *stringUpper = stringToUpperCase( 
+                                    holdingO->description );
+
+                                stripDescriptionComment( stringUpper );
+
+
+                                mDeathReason = autoSprintf( 
+                                    "%s%s",
+                                    translate( "reasonKilled" ),
+                                    stringUpper );
+                                
+                                delete [] stringUpper;
+                                }
+                            }
                         else if( strcmp( reasonString, "age" ) == 0 ) {
                             mDeathReason = stringDuplicate( 
                                 translate( "reasonOldAge" ) );
@@ -27079,9 +27108,7 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                                 sendToServerSocket( message );
                                 delete [] message;
                                 }
-                            else if( commandTyped( typedText, "dieCommand" ) 
-                                     &&
-                                     computeCurrentAge( ourLiveObject ) < 2 ) {
+                            else if( commandTyped( typedText, "dieCommand" ) {
                                 // die command issued from baby
                                 char *message = 
                                     autoSprintf( "DIE 0 0#" );

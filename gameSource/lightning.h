@@ -41,6 +41,6 @@ void updateLightSource( int cellX, int cellY, int lightValue );
 void updateHeldLightSources( int actorID, int cellX, int cellY, int lightValue );
 
 
-void SetTimeSettings(float darkness, int frequency, int deviation);
+void SetTimeSettings(float darkness, int frequency, int deviation, int blockers, int sources);
 
 #endif

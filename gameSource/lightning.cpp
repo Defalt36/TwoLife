@@ -431,8 +431,8 @@ void updateLightBlocker( int cellX, int cellY, int blockStatus ) {
 //could be used along with ini settings
 void SetTimeSettings(float darkness, int frequency, int deviation, int blockers, int sources) {
 	night_darkness = darkness;
-	curve_deviation = deviation;
 	night_frequency_overwrite = frequency;
+	curve_deviation = deviation;
 	
 	if ( blockers > -1 ) {
 		max_blockers = blockers;

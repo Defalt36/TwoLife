@@ -21,6 +21,9 @@ int curve_deviation = 10;
 //make light range more rounded
 float light_decrease = sqrt(2);
 
+int max_sources = 150;
+int max_blockers = 250;
+
 float DayLight(int time_current, int night_frequency) {
 	if (time_current == -1) { return 0; }
 
@@ -278,7 +281,6 @@ bool IsShadow(int cellX, int cellY) {
 	return isShadow;
 }
 
-
 bool lightSourceExists(int cellX, int cellY) {
 	int size = mapLightSources.size();
 	if (size > 0) {
@@ -320,7 +322,8 @@ void removeLightSource(int cellX, int cellY) {
 }
 
 void updateLightSource(int cellX, int cellY, int lightValue) {
-	if (mapLightSources.size() > 150) { mapLightSources.deleteAll(); }
+	if ( max_sources == 0 ) { return; }	
+	if (mapLightSources.size() > max_sources) { mapLightSources.deleteAll(); }
 	
 	bool alreadyExist = lightSourceExists(cellX, cellY);
 	if (lightValue == 0 && alreadyExist) {
@@ -381,7 +384,8 @@ void removeLightBlocker( int cellX, int cellY) {
 }
 
 void updateLightBlocker( int cellX, int cellY, int blockStatus ) {
-	if (lightBlockers.size() > 500) { lightBlockers.deleteAll(); }
+	if ( max_blockers == 0 ) { return; }
+	if (lightBlockers.size() > max_blockers) { lightBlockers.deleteAll(); }
 	
 	bool alreadyExist = lightBlockerExists(cellX, cellY);
 	if (blockStatus == false && alreadyExist) {
@@ -425,8 +429,15 @@ void updateLightBlocker( int cellX, int cellY, int blockStatus ) {
 
 
 //could be used along with ini settings
-void SetTimeSettings(float darkness, int frequency, int deviation) {
+void SetTimeSettings(float darkness, int frequency, int deviation, int blockers, int sources) {
 	night_darkness = darkness;
 	curve_deviation = deviation;
 	night_frequency_overwrite = frequency;
+	
+	if ( blockers > -1 ) {
+		max_blockers = blockers;
+	}
+	if ( sources > -1 ) {
+		max_sources = sources;
+	}
 }

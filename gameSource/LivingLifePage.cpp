@@ -86,6 +86,7 @@ static char shouldMoveCamera = true;
 static int night_frequency = 36;
 
 static int daylightMode = -1;
+static int timezone = -1;
 
 static int requestedServerTime = -1;
 static int serverTimeOffset = 0;
@@ -4936,6 +4937,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
 	//only load once
 	if (daylightMode == -1) {
 		daylightMode = SettingsManager::getIntSetting( "daylightMode", 1 );
+		timezone = SettingsManager::getIntSetting( "timezone", 0 );
+		SetTimeSettings( SettingsManager::getFloatSetting( "nightDarkness", 0.75f ),
+						 SettingsManager::getIntSetting("nightCurve", 10),
+						 SettingsManager::getIntSetting("nightFrequency", -1),
+						 SettingsManager::getIntSetting("maxBlockers", -1),
+						 SettingsManager::getIntSetting("maxSources", -1);
 	}
 	
 	//player is in tutorial, load again next time
@@ -4970,13 +4977,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 	}
 	else if (daylightMode == 3) {
 		//night in the game if it is night outside
-		int timezone = SettingsManager::getIntSetting( "timezone", 0 );
 		time_current = fmod(game_time + (timezone * 3600), 86400);
 		night_frequency = 1;
 	}
 	else if (daylightMode == 4) {
 		//client side night only; each 40 minutes
-		int timezone = SettingsManager::getIntSetting( "timezone", 0 );
 		night_frequency = 36;
 		
 		//time zone becomes game time offset (the game world have different timezones xd)

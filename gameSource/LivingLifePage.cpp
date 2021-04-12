@@ -82,6 +82,8 @@ doublePair LivingLifePage::minitechGetLastScreenViewCenter() { return lastScreen
 
 static char shouldMoveCamera = true;
 
+static bool resetScale = true;
+
 
 extern double viewWidth;
 extern double viewHeight;
@@ -3070,12 +3072,12 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
     char colorOnly = false;
     
     if( savingSpeech && savingSpeechColor && inFade == 1.0 ) {
-        drawSquare( inPos, 1024 * fovmod::gui_fov_scale );
+        drawSquare( inPos, 1024 * gui_fov_scale );
         colorOnly = true;
         }
     else if( savingSpeech && savingSpeechMask && inFade == 1.0 ) {
         setDrawColor( 0, 0, 0, 1.0 );
-        drawSquare( inPos, 1024 * fovmod::gui_fov_scale );
+        drawSquare( inPos, 1024 * gui_fov_scale );
         setDrawColor( 1, 1, 1, 1 );
         maskOnly = true;
         }
@@ -5041,6 +5043,12 @@ void LivingLifePage::draw( doublePair inViewCenter,
         return;
         }
 
+	if ( resetScale ) {
+		changeFOV( 1.0f );
+		changeHUDFOV( 1.0f );
+		resetScale = false;
+		}
+
 
     //setDrawColor( 1, 1, 1, 1 );
     //drawSquare( lastScreenViewCenter, viewWidth );
@@ -5062,13 +5070,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     // more on left and right of screen to avoid wide object tops popping in        
     // SIDE NOTE:  x is scaled directly.  value * scale
-    int xStart = gridCenterX - (int)(ceil(7 * fovmod::gui_fov_scale));
-    int xEnd = gridCenterX + (int)(ceil(7 * fovmod::gui_fov_scale));
+    int xStart = gridCenterX - (int)(ceil(7 * gui_fov_scale));
+    int xEnd = gridCenterX + (int)(ceil(7 * gui_fov_scale));
 
     // more on bottom of screen so that tall objects don't pop in       
     // SIDE NOTE:  y is scaled with offset.
-    int yStart = gridCenterY - (int)(ceil(5 * fovmod::gui_fov_scale) + 1);   // Default: 6  (5 * scale + 1)
-    int yEnd = gridCenterY + (int)(ceil(5 * fovmod::gui_fov_scale) - 1);     // Default: 4   (5 * scale - 1)
+    int yStart = gridCenterY - (int)(ceil(5 * gui_fov_scale) + 1);   // Default: 6  (5 * scale + 1)
+    int yEnd = gridCenterY + (int)(ceil(5 * gui_fov_scale) - 1);     // Default: 4   (5 * scale - 1)
 
     if( xStart < 0 ) {
         xStart = 0;
@@ -5112,11 +5120,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
     // FOVMOD NOTE:  Change 10/27 - Take these lines during the merge process
     // SIDE NOTE:  These 4 variables control the ground (biome) display
-    int yStartFloor = gridCenterY - (int)(ceil(3 * fovmod::gui_fov_scale + 1));
-    int yEndFloor = gridCenterY + (int)(ceil(3 * fovmod::gui_fov_scale));
+    int yStartFloor = gridCenterY - (int)(ceil(3 * gui_fov_scale + 1));
+    int yEndFloor = gridCenterY + (int)(ceil(3 * gui_fov_scale));
 
-    int xStartFloor = gridCenterX - (int)(ceil(5 * fovmod::gui_fov_scale));
-    int xEndFloor = gridCenterX + (int)(ceil(5 * fovmod::gui_fov_scale) + 1);
+    int xStartFloor = gridCenterX - (int)(ceil(5 * gui_fov_scale));
+    int xEndFloor = gridCenterX + (int)(ceil(5 * gui_fov_scale) + 1);
 
     
 
@@ -6202,7 +6210,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
                         // vary by a tiny amount, so we don't change
                         // the way they are sorted relative to other objects
-                        depth += ( age_death - o->age ) / 6000.0;
+                        depth += ( 60.0 - o->age ) / 6000.0;
                         }
                     
                     drawQueue.insert( drawRec, depth );
@@ -8522,10 +8530,10 @@ void LivingLifePage::draw( doublePair inViewCenter,
             delete [] pointString;
             }
         
-        char *curseString = autoSprintf( "%d", ourLiveObject->curseLevel );
-        curseTokenPos.x -= ( 3 * scaleHUD );
-        curseTokenPos.y -= curseTokenFont->getFontHeight();
-        handwritingFont->drawString( curseString, curseTokenPos, alignCenter );
+        //char *curseString = autoSprintf( "%d", ourLiveObject->curseLevel );
+        //curseTokenPos.x -= ( 3 * scaleHUD );
+        //curseTokenPos.y -= curseTokenFont->getFontHeight();
+        //handwritingFont->drawString( curseString, curseTokenPos, alignCenter );
 
 
 
@@ -11004,7 +11012,7 @@ void LivingLifePage::step() {
             
 
 
-            mHintExtraOffset[ i ].x = - longestLine / gui_fov_scale_hud;
+            mHintExtraOffset[ i ].x = - getLongestLine( mHintMessage[i] ) / gui_fov_scale_hud;
             }
         }
     else if( ourObject != NULL && mNextHintObjectID != 0 &&
@@ -13831,7 +13839,6 @@ void LivingLifePage::step() {
                 int actionTargetY = 0;
                 
                 double invAgeRate = 60.0;
-                invAgeRate = age_death;
                 
                 int responsiblePlayerID = -1;
                 
@@ -15518,6 +15525,9 @@ void LivingLifePage::step() {
                 else if( o.id == ourID && 
                          strstr( lines[i], "X X" ) != NULL  ) {
                     // we died
+					
+					changeFOV( 1.0f );
+					changeHUDFOV( 1.0f );
 
                     printf( "Got X X death message for our ID %d\n",
                             ourID );
@@ -20562,7 +20572,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         ! p.hitAnObject &&
         ! modClick && ourLiveObject->holdingID == 0 &&
         // only adults can pick up babies
-        ourAge >= age_fertile ) {
+        ourAge > 13 ) {
         
 
         doublePair targetPos = { (double)clickDestX, (double)clickDestY };

@@ -181,8 +181,15 @@ int gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
 int gui_fov_offset_y = (int)(((720 * gui_fov_target_scale_hud) - 720)/2);
 
 
-double viewWidth = 1280 * fovmod::gui_fov_scale;
-double viewHeight = 720 * fovmod::gui_fov_scale;
+double viewWidth = 1280 * gui_fov_scale;
+double viewHeight = 720 * gui_fov_scale;
+
+// this is the desired visible width
+// if our screen is wider than this (wider than 16:9 aspect ratio)
+// then we will put letterbox bars on the sides
+// Usually, if screen is not 16:9, it will be taller, not wider,
+// and we will put letterbox bars on the top and bottom 
+double visibleViewWidth = viewWidth;
 
 
 void sanityCheckSettings(const char *inSettingName) {
@@ -290,13 +297,6 @@ void freeAndQuit() {
 	quitGame();
 }
 
-
-// this is the desired visible width
-// if our screen is wider than this (wider than 16:9 aspect ratio)
-// then we will put letterbox bars on the sides
-// Usually, if screen is not 16:9, it will be taller, not wider,
-// and we will put letterbox bars on the top and bottom 
-double visibleViewWidth = viewWidth;
 
 
 
@@ -653,8 +653,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
 
 
 	// FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process
-	int shouldScaleHUD = fovmod::gui_fov_scale_hud;
-	float scaleHUD = fovmod::gui_fov_scale;
+	int shouldScaleHUD = gui_fov_scale_hud;
+	float scaleHUD = gui_fov_scale;
 	if( shouldScaleHUD > 0 ) {
 		scaleHUD = 1.0f;
 	}
@@ -1761,7 +1761,7 @@ void drawFrame( char inUpdate ) {
                         autoLogIn = false;
                         }
 
-                    if( binVersionNumber == expectedVersionNumber ) { 
+                    if( binVersionNumber == expectedVersionNumber || true ) { 
                         currentGamePage = existingAccountPage;
                         currentGamePage->base_makeActive( true );
                         }

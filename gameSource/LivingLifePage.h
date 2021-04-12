@@ -978,9 +978,6 @@ class LivingLifePage : public GamePage, public ActionListener {
         void agePanel( LiveObject* ourLiveObject, char displayPanel = true );
 
 
-        char mUsingSteam;
-        char mZKeyDown;
-
         char mPlayerInFlight;
 
         Picker mObjectPicker;

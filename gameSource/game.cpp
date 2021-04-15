@@ -181,8 +181,8 @@ int gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
 int gui_fov_offset_y = (int)(((720 * gui_fov_target_scale_hud) - 720)/2);
 
 
-double viewWidth = 1280 * gui_fov_scale;
-double viewHeight = 720 * gui_fov_scale;
+double viewWidth = 1280;
+double viewHeight = 720;
 
 // this is the desired visible width
 // if our screen is wider than this (wider than 16:9 aspect ratio)
@@ -202,10 +202,8 @@ void sanityCheckSettings(const char *inSettingName) {
 
 
 void setFOVScale() {
-    sanityCheckSettings( "fovScale" );
-    sanityCheckSettings( "fovScaleHUD" );
-    sanityCheckSettings( "fovPreferredMin" );
-    sanityCheckSettings( "fovPreferredMax" );
+    sanityCheckSettings( "fovDefault" );
+    sanityCheckSettings( "fovMax" );
 	sanityCheckSettings( "hudDrawMode" );
 
 	gui_hud_mode = SettingsManager::getIntSetting( "hudDrawMode", 0 );
@@ -213,29 +211,20 @@ void setFOVScale() {
 	else if( gui_hud_mode > 2 ) gui_hud_mode = 2;
 	SettingsManager::setSetting( "hudDrawMode", gui_hud_mode );
 
-    gui_fov_target_scale_hud = SettingsManager::getFloatSetting( "fovScaleHUD", 1.0f );
-	if( gui_fov_target_scale_hud < 1.0f ) gui_fov_target_scale_hud = 1.0f;
-	else if( gui_fov_target_scale_hud > 6.0f ) gui_fov_target_scale_hud = 6.0f;
-	SettingsManager::setSetting( "fovScaleHUD", gui_fov_target_scale_hud );
-	
-    gui_fov_scale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
-    if( gui_fov_scale < 1.0f ) gui_fov_scale = 1.0f;
-	else if ( gui_fov_scale > 6.0f ) gui_fov_scale = 6.0f;
+    gui_fov_scale = SettingsManager::getFloatSetting( "fovDefault", 1.25f );
+    if( ! gui_fov_scale || gui_fov_scale < 1 )
+		gui_fov_scale = 1.0f;
+    else if ( gui_fov_scale > 6 )
+		gui_fov_scale = 6.0f;
+	SettingsManager::setSetting( "fovDefault", gui_fov_scale );
 	SettingsManager::setSetting( "fovScale", gui_fov_scale );
 
-    gui_fov_preferred_min_scale = SettingsManager::getFloatSetting( "fovPreferredMin", 1.5f );
-    if( ! gui_fov_preferred_min_scale || gui_fov_preferred_min_scale < 1 )
-		gui_fov_preferred_min_scale = 1.f;
-    else if ( gui_fov_preferred_min_scale > 6 )
-		gui_fov_preferred_min_scale = 6.f;
-	SettingsManager::setSetting( "fovPreferredMin", gui_fov_preferred_min_scale );
-
-    gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovPreferredMax", 3.0f );
+    gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovMax", 3.0f );
     if( ! gui_fov_preferred_max_scale || gui_fov_preferred_max_scale < 1 )
-		gui_fov_preferred_max_scale = 1.f;
+		gui_fov_preferred_max_scale = 1.0f;
 	else if ( gui_fov_preferred_max_scale > 6 )
-		gui_fov_preferred_max_scale = 6.f;
-	SettingsManager::setSetting( "fovPreferredMax", gui_fov_preferred_max_scale );
+		gui_fov_preferred_max_scale = 6.0f;
+	SettingsManager::setSetting( "fovMax", gui_fov_preferred_max_scale );
 
 	gui_fov_scale_hud = gui_fov_scale / gui_fov_target_scale_hud;
     gui_fov_offset_x = (int)(((1280 * gui_fov_target_scale_hud) - 1280)/2);
@@ -243,59 +232,10 @@ void setFOVScale() {
     viewWidth = 1280 * gui_fov_scale;
     viewHeight = 720 * gui_fov_scale;
     visibleViewWidth = viewWidth;
+	
+	SettingsManager::setSetting( "fovScaleHUD", gui_fov_target_scale_hud );
 }
 
-
-// NAMEMOD NOTE:  Change 1/5 - Take these lines during the merge process
-char *firstNames = NULL;
-char *lastNames = NULL;
-int firstNamesLen;
-int lastNamesLen;
-
-
-static char *readNameFile( const char *inFileName, int *outLen ) {    
-    File nameFile( NULL, inFileName );
-    char *contents = nameFile.readFileContents();
-    if( contents == NULL ) {
-        AppLog::errorF( "Failed to open name file %s for reading", inFileName );
-        return NULL;
-    }
-    char *temp = contents;
-    contents = stringToUpperCase( temp );
-    delete [] temp;    
-    int len = strlen( contents );
-    for( int i=0; i<len; i++ ) {
-        if( contents[i] == '\n' ) {
-            contents[i] = '\0';
-        }
-    }
-    *outLen = len;    
-    return contents;
-}
-
-
-void initNames() {
-    firstNames = readNameFile( "nameLists/first/allFirstNames.txt", &firstNamesLen );
-    lastNames = readNameFile( "nameLists/last/allLastNames.txt", &lastNamesLen  );
-}
-
-
-void freeNames() {
-    if( firstNames != NULL ) {
-        delete [] firstNames;
-        firstNames = NULL;
-    }
-    if( lastNames != NULL ) {
-        delete [] lastNames;
-        lastNames = NULL;
-    }
-}
-
-
-void freeAndQuit() {
-	freeNames();
-	quitGame();
-}
 
 
 
@@ -533,8 +473,7 @@ void initDrawString( int inWidth, int inHeight ) {
 
 	// FOVMOD NOTE:  Change 2/3 - Take these lines during the merge process
 	setFOVScale();
-    // NAMEMOD NOTE:  Change 3/5 - Take these lines during the merge process
-    initNames();
+
     toggleLinearMagFilter( true );
     toggleMipMapGeneration( true );
     toggleMipMapMinFilter( true );
@@ -649,15 +588,7 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     smallFont = new Font( getFontTGAFileName(), 3, 8, false, 8 * gui_fov_scale_hud );
 
     titleFont = 
-        new Font( "font_handwriting_32_32.tga", 3, 6, false, 20 );
-
-
-	// FOVMOD NOTE:  Change 3/3 - Take these lines during the merge process
-	int shouldScaleHUD = gui_fov_scale_hud;
-	float scaleHUD = gui_fov_scale;
-	if( shouldScaleHUD > 0 ) {
-		scaleHUD = 1.0f;
-	}
+        new Font( "font_handwriting_32_32.tga", 3, 6, false, 20 * gui_fov_scale_hud );
 	
     handwritingFont = 
         new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * gui_fov_scale_hud );
@@ -1822,8 +1753,7 @@ void drawFrame( char inUpdate ) {
             }
         else if( currentGamePage == existingAccountPage ) {    
             if( existingAccountPage->checkSignal( "quit" ) ) {
-                // NAMEMOD NOTE:  Change 4/5 - Take these lines during the merge process
-                freeAndQuit();
+                quitGame();
                 }
             else if( existingAccountPage->checkSignal( "poll" ) ) {
                 currentGamePage = pollPage;
@@ -2214,13 +2144,12 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             else if( rebirthChoicePage->checkSignal( "quit" ) ) {
-                // NAMEMOD NOTE:  Change 5/5 - Take these lines during the merge process
-                freeAndQuit();
+				quitGame();
                 }
             }
         else if( currentGamePage == finalMessagePage ) {
             if( finalMessagePage->checkSignal( "quit" ) ) {
-                freeAndQuit();
+                quitGame();
                 }
             }
         }

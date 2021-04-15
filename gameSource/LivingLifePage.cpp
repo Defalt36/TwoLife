@@ -246,11 +246,7 @@ static void clearLocationSpeech() {
     locationSpeech.deleteAll();
     }
 
-// LINEAGEFERTILITYMOD NOTE:  Change 1/4 - Take these lines during the merge process
-static char showFertilityPanel = true;
-// AGEMOD NOTE:  Change 1/3 - Take these lines during the merge process
-static char showAgePanel = true;
-static char showCursorZoom = false;
+//static char showCursorZoom = false;
 // FOVMOD NOTE:  Change 2/27 - Take these lines during the merge process
 static double recalcOffsetX( double x, bool force = false ) {
     double res;
@@ -5044,7 +5040,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
 	if ( resetScale ) {
-		changeFOV( 1.0f );
+		changeFOV( 1.5f );
 		changeHUDFOV( 1.0f );
 		resetScale = false;
 		}
@@ -7612,16 +7608,19 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
 	if( showHelp ) {
+	
 	int columnNumber = 0;
-	int columnWidth = 450;
-	int columnHeight = 600;
-	int columnOffset = 300;
+	int columnWidth = 450 * gui_fov_scale;
+	int columnHeight = 600 * gui_fov_scale;
+	int columnOffset = 300 * gui_fov_scale;
 	
 	int lastDrawnColumn = 0;
-	int lineHeight = 40;
+	int lineHeight = 40 * gui_fov_scale;
 	
-	int columnStartX = -600;
-	int columnStartY = -100;
+	int columnStartX = -600 * gui_fov_scale;
+	int columnStartY = -100 * gui_fov_scale;
+	
+	int temp;
 	
 	doublePair writePos;
 	writePos.x = lastScreenViewCenter.x + columnStartX;
@@ -7643,35 +7642,41 @@ void LivingLifePage::draw( doublePair inViewCenter,
 					//continue;
 					}
 				else if ( strstr( lines[i], "@COLUMN_W" ) != NULL ) {
-					sscanf( lines[i], "@COLUMN_W=%d", &( columnWidth ) );
+					sscanf( lines[i], "@COLUMN_W=%d", &( temp ) );
+					columnWidth = gui_fov_scale * temp;
 					continue;
 					}
 				else if ( strstr( lines[i], "@COLUMN_H" ) != NULL ) {
-					sscanf( lines[i], "@COLUMN_H=%d", &( columnHeight ) );
-					writePos.y = lastScreenViewCenter.y + columnHeight / 2;
+					sscanf( lines[i], "@COLUMN_H=%d", &( temp ) );
+					columnHeight = gui_fov_scale * temp;
+					writePos.y = lastScreenViewCenter.y + columnHeight/2;
 					continue;
 					}
 				else if ( strstr( lines[i], "@COLUMN_O=" ) != NULL ) {
-					sscanf( lines[i], "@COLUMN_O=%d", &( columnOffset ) );
+					sscanf( lines[i], "@COLUMN_O=%d", &( temp ) );
+					columnOffset = gui_fov_scale * temp;
 					continue;
 					}
 				else if ( strstr( lines[i], "@START_X" ) != NULL ) {
-					sscanf( lines[i], "@START_X=%d", &( columnStartX ) );
+					sscanf( lines[i], "@START_X=%d", &( temp ) );
+					columnStartX = gui_fov_scale * temp;
 					writePos.x = lastScreenViewCenter.x + columnStartX;
 					continue;
 					}
 				else if ( strstr( lines[i], "@START_Y" ) != NULL ) {
-					sscanf( lines[i], "@START_Y=%d", &( columnStartY ) );
-					writePos.y = lastScreenViewCenter.y + columnStartY + columnHeight / 2;
+					sscanf( lines[i], "@START_Y=%d", &( temp ) );
+					columnStartY = gui_fov_scale * temp;
+					writePos.y = lastScreenViewCenter.y + columnStartY + columnHeight/2;
 					continue;
 					}
 				else if ( strstr( lines[i], "@LINEHEIGHT" ) != NULL ) {
-					sscanf( lines[i], "@LINEHEIGHT=%d", &( lineHeight ) );
+					sscanf( lines[i], "@LINEHEIGHT=%d", &( temp ) );
+					lineHeight = gui_fov_scale * temp;
 					continue;
 					}					
 				else if ( strstr( lines[i], "#sheet" ) != NULL ) {
 					sscanf( lines[i], "#sheet%d", &( columnNumber ) );
-					writePos.y = lastScreenViewCenter.y + columnStartY + columnHeight / 2; //reset lineHeight additions
+					writePos.y = lastScreenViewCenter.y + columnStartY + columnHeight/2; //reset lineHeight additions
 					continue;
 					}
 				else if ( strstr( lines[i], "warning$" ) != NULL ) {
@@ -7722,9 +7727,9 @@ void LivingLifePage::draw( doublePair inViewCenter,
 						}
 						
 					doublePair drawPos;
-					drawPos.x = writePos.x + columnWidth / 2;
+					drawPos.x = writePos.x + columnWidth/2;
 					drawPos.y = lastScreenViewCenter.y + columnStartY;
-					drawSprite( sheetSprites[columnNumber], drawPos );
+					drawSprite( sheetSprites[columnNumber], drawPos, gui_fov_scale );
 					lastDrawnColumn = columnNumber;
 					}
 					
@@ -7734,27 +7739,27 @@ void LivingLifePage::draw( doublePair inViewCenter,
 				else if ( isTitle ) {
 					setDrawColor( 0.1f, 0.1f, 0.1f, 1 );
 					int titleSize = titleFont->measureString( lines[i] );
-					titleFont->drawString( lines[i], { writePos.x + ( columnWidth - titleSize ) / 2, writePos.y - lineHeight }, alignLeft );
+					titleFont->drawString( lines[i], { writePos.x + (columnWidth - titleSize)/2, writePos.y - lineHeight }, alignLeft );
 					writePos.y -= lineHeight * 1.5f;
 					}
 				else if ( isSub ) {
 					setDrawColor( 0.2f, 0.4f, 0.6f, 1 );
-					handwritingFont->drawString( lines[i], { writePos.x + 60, writePos.y - lineHeight * 0.75f }, alignLeft );
+					handwritingFont->drawString( lines[i], { writePos.x + 60 * gui_fov_scale, writePos.y - lineHeight * 0.75f }, alignLeft );
 					int subSize = handwritingFont->measureString( lines[i] );
 					setDrawColor( 0.1f, 0.1f, 0.1f, 1 );
-					pencilFont->drawString( subString, { writePos.x + subSize + 80 , writePos.y - lineHeight * 0.75f }, alignLeft );
+					pencilFont->drawString( subString, { writePos.x + subSize + 80 * gui_fov_scale, writePos.y - lineHeight * 0.75f }, alignLeft );
 					writePos.y -= lineHeight * 0.75;
 					}
 				else {
 					setDrawColor( 0.1f, 0.1f, 0.1f, 1 );
-					pencilFont->drawString( lines[i], { writePos.x + 40, writePos.y - lineHeight * 0.75f }, alignLeft );
+					pencilFont->drawString( lines[i], { writePos.x + 40 * gui_fov_scale, writePos.y - lineHeight * 0.75f }, alignLeft );
 					writePos.y -= lineHeight;
 					}
+					}
+				delete [] lines;
 				}
-			delete [] lines;
 			}
 		}
-	}
 
 
 
@@ -8432,16 +8437,18 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-    // LINEAGEFERTILITYMOD NOTE:  Change 2/4 - Take these lines during the merge process
-	lineageFertilityPanel(ourLiveObject, showFertilityPanel);
-	// AGEMOD NOTE:  Change 2/3 - Take these lines during the merge process
-	agePanel(ourLiveObject, showAgePanel);
-
 
 
     // info panel at bottom
     setDrawColor( 1, 1, 1, 1 );
     doublePair panelPos = lastScreenViewCenter;
+	
+	setDrawColor( 0.4f, 0.1f, 0.1f, 1 );
+	if ( showHelp && closeMessage != NULL ) {
+		handwritingFont->drawString( closeMessage, { lastScreenViewCenter.x - 0.5 * handwritingFont->measureString( closeMessage ), lastScreenViewCenter.y - 285 }, alignLeft );
+		}
+	setDrawColor( 1, 1, 1, 1 );
+	
     // FOVMOD NOTE:  Change 16/27 - Take these lines during the merge process
 	panelPos.y -= recalcOffsetY( 242 + 32 + 16 + 6 ) * gui_fov_scale;
 	// First left part.
@@ -15526,7 +15533,7 @@ void LivingLifePage::step() {
                          strstr( lines[i], "X X" ) != NULL  ) {
                     // we died
 					
-					changeFOV( 1.0f );
+					changeFOV( 1.5f );
 					changeHUDFOV( 1.0f );
 
                     printf( "Got X X death message for our ID %d\n",
@@ -19771,13 +19778,13 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     int mouseButton = getLastMouseButton();
 	if( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) {
 		float currentScale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
-		float newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentScale -= 0.5 : currentScale += 0.5;
+		float newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentScale -= 0.25f : currentScale += 0.25f;
 		if ( isShiftKeyDown() ) {
-			newScale = ( mouseButton == MouseButton::WHEELUP ) ? SettingsManager::getFloatSetting( "fovPreferredMin", 1.5f ) : SettingsManager::getFloatSetting( "fovPreferredMax", 3.0f );
+			newScale = ( mouseButton == MouseButton::WHEELUP ) ? SettingsManager::getFloatSetting( "fovDefault", 1.25f ) : SettingsManager::getFloatSetting( "fovMax", 2.25f );
             }
         if ( isCommandKeyDown() ) {
             float currentHUDScale = SettingsManager::getFloatSetting( "fovScaleHUD", 1.0f );
-            newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentHUDScale -= 0.5 : currentHUDScale += 0.5;
+            newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentHUDScale -= 0.25f : currentHUDScale += 0.25f;
             changeHUDFOV( newScale );
         } else {
             changeFOV( newScale );
@@ -21386,24 +21393,6 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
         }
 
 	if (minitech::livingLifeKeyDown(inASCII)) return;
-    
-
-    if( isShiftKeyDown() && ( isalpha( inASCII ) || inASCII == 32 ) ) {
-		if( ! mSayField.isFocused() ) {
-            mSayField.focus();
-        }
-		const char *namingPrefix = ( getOurLiveObject()->name != NULL ) ? "YOU ARE" : "I AM";
-		const char *randomName = ( getOurLiveObject()->name != NULL ) ? findRandomFirstName( reinterpret_cast<char*>( &inASCII ) ) : findRandomLastName( reinterpret_cast<char*>( &inASCII ) );
-		mSayField.setText( autoSprintf( "%s %s", namingPrefix, randomName ) );
-		return;
-	}
-	
-	if( isalpha( inASCII ) ) {
-        if( ! mSayField.isFocused() ) {
-            mSayField.setText( reinterpret_cast<char*>( &inASCII ) );
-            mSayField.focus();
-        }
-    }
 	
     switch( inASCII ) {
         /*
@@ -21577,10 +21566,6 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
             if( ! mSayField.isFocused() ) {
                 shouldMoveCamera = false;
                 }
-            break;
-        // LINEAGEFERTILITYMOD NOTE:  Change 3/4 - Take these lines during the merge process
-        case 92: // backslash
-            showFertilityPanel = !showFertilityPanel;
             break;
         case 96: { // grave
         // FOVMOD NOTE:  Change 26/27 - Take these lines during the merge process
@@ -21882,16 +21867,16 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
         sendToServerSocket( (char*)"EMOT 0 0 6#" );
         return;
         }
-	if( inKeyCode == MG_KEY_LEFT || 
-		inKeyCode == MG_KEY_RIGHT ) {
+	if( ( inKeyCode == MG_KEY_LEFT || 
+		inKeyCode == MG_KEY_RIGHT ) && ! vogMode ) {
 		float currentScale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
-		float newScale = ( inKeyCode == MG_KEY_LEFT ) ? currentScale -= 0.5 : currentScale += 0.5;
+		float newScale = ( inKeyCode == MG_KEY_LEFT ) ? currentScale -= 0.25f : currentScale += 0.25f;
         if ( isShiftKeyDown() ) {
-            newScale = ( inKeyCode == MG_KEY_LEFT ) ? SettingsManager::getFloatSetting( "fovPreferredMin", 1.5f ) : SettingsManager::getFloatSetting( "fovPreferredMax", 3.0f );
+            newScale = ( inKeyCode == MG_KEY_LEFT ) ? SettingsManager::getFloatSetting( "fovDefault", 1.25f ) : SettingsManager::getFloatSetting( "fovMax", 2.25f );
             }
         if ( isCommandKeyDown() ) {
             float currentHUDScale = SettingsManager::getFloatSetting( "fovScaleHUD", 1.0f );
-            newScale = ( inKeyCode == MG_KEY_LEFT ) ? currentHUDScale -= 0.5 : currentHUDScale += 0.5;
+            newScale = ( inKeyCode == MG_KEY_LEFT ) ? currentHUDScale -= 0.25f : currentHUDScale += 0.25f;
             changeHUDFOV( newScale );
         } else {
 		    changeFOV( newScale );
@@ -21937,113 +21922,6 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
                                          newPos.x, newPos.y );
             sendToServerSocket( message );
             delete [] message;
-            }
-        }
-    else if( inKeyCode == MG_KEY_UP ||
-        inKeyCode == MG_KEY_DOWN ) {
-        if( ! mSayField.isFocused() && inKeyCode == MG_KEY_UP ) {
-            if( mSentChatPhrases.size() > 0 ) {
-                mSayField.setText( 
-                    mSentChatPhrases.getElementDirect( 
-                        mSentChatPhrases.size() - 1 ) );
-                }
-            else {
-                mSayField.setText( "" );
-                }
-            mSayField.focus();
-            }
-        else {
-            char *curText = mSayField.getText();
-                
-            int curBufferIndex = -1;
-            
-            if( strcmp( curText, "" ) != 0 ) {
-                for( int i=mSentChatPhrases.size()-1; i>=0; i-- ) {
-                    if( strcmp( curText, mSentChatPhrases.getElementDirect(i) )
-                        == 0 ) {
-                        curBufferIndex = i;
-                        break;
-                        }
-                    }
-                }
-            delete [] curText;
-            
-            int newIndex = mSentChatPhrases.size();
-            
-            if( curBufferIndex != -1 ) {
-                newIndex = curBufferIndex;
-                
-                }
-
-            if( inKeyCode == MG_KEY_UP ) {
-                newIndex --;
-                }
-            else {
-                newIndex ++;
-                }
-
-            
-            if( newIndex >= 0 ) {
-                
-                if( mCurrentNoteChars.size() > 0 ) {
-                    // fade older erased chars 
-
-                    for( int i=0; i<mErasedNoteCharFades.size(); i++ ) {
-                        if( mErasedNoteCharFades.getElementDirect( i ) > 0.5 ) {
-                            *( mErasedNoteCharFades.getElement( i ) ) -= 0.2;
-                            }
-                        else {
-                            *( mErasedNoteCharFades.getElement( i ) ) -= 0.1;
-                            }
-                        
-                        if( mErasedNoteCharFades.getElementDirect( i ) <= 0 ) {
-                            mErasedNoteCharFades.deleteElement( i );
-                            mErasedNoteChars.deleteElement( i );
-                            mErasedNoteCharOffsets.deleteElement( i );
-                            i--;
-                            }
-                        }
-                    }
-                
-                // first, remove exact duplicates from erased
-                for( int i=0; i<mCurrentNoteChars.size(); i++ ) {
-                    char c = mCurrentNoteChars.getElementDirect( i );
-                    doublePair pos = 
-                        mult( mCurrentNoteCharOffsets.getElementDirect( i ), gui_fov_scale_hud );
-                    
-                    for( int j=0; j<mErasedNoteChars.size(); j++ ) {
-                        if( mErasedNoteChars.getElementDirect(j) == c 
-                            &&
-                            equal( mErasedNoteCharOffsets.getElementDirect(j),
-                                   pos ) ) {
-                            
-                            mErasedNoteChars.deleteElement( j );
-                            mErasedNoteCharOffsets.deleteElement( j );
-                            mErasedNoteCharFades.deleteElement( j );
-                            j--;
-                            }
-                        }
-                    }
-                
-
-                for( int i=0; i<mCurrentNoteChars.size(); i++ ) {
-                    mErasedNoteChars.push_back( 
-                        mCurrentNoteChars.getElementDirect( i ) );
-                    
-                    mErasedNoteCharOffsets.push_back(
-                        mCurrentNoteCharOffsets.getElementDirect( i ) );
-                    
-                    mErasedNoteCharFades.push_back( 1.0f );
-                    }
-                
-                if( newIndex >= mSentChatPhrases.size() ) {
-                    mSayField.setText( "" );
-                    }
-                else {
-                    mSayField.setText( 
-                        mSentChatPhrases.getElementDirect( newIndex ) );
-                    }
-                }
             }
         }
     }
@@ -22132,172 +22010,6 @@ void LivingLifePage::putInMap( int inMapI, ExtraMapObject *inObj ) {
     }
 
 
-int getRandomIndex( char *inNameList, int inListLen ) {
-	int limit = inListLen - 1;
-	int outIndex = randSource.getRandomBoundedInt( 0, inListLen + 1 );
-	while( outIndex < limit && inNameList[ outIndex ] != '\0' ) {
-		outIndex++;
-	    }
-	if( outIndex == limit ) {
-		while( outIndex > 0 && inNameList[ outIndex ] != '\0' ) {
-			outIndex--;
-            }
-		if( outIndex == 0 ) {
-			return 0;
-		} else {
-			return outIndex + 1;
-            }
-	} else {
-		return outIndex + 1;
-        }
-    }
-
-
-const char *findRandomName( char *inString, char *inNameList, int inListLen ) {
-	if( inNameList == NULL ) { return "WUTFACE"; }
-	char *tempString = stringToUpperCase( inString );
-	int randomIndex = getRandomIndex( inNameList, inListLen );
-	if( ! isalpha(tempString[0]) ) { 
-		return &(inNameList[ randomIndex ]);
-        }
-	char firstLetterMatches = false;
-	while( ! firstLetterMatches ) {
-		char *testString = &( inNameList[ randomIndex ] );
-		firstLetterMatches = stringStartsWith( testString, tempString );
-		if( ! firstLetterMatches ) {
-			randomIndex = getRandomIndex( inNameList, inListLen );
-            }
-        }
-	delete [] tempString;
-	return &(inNameList[ randomIndex ]);
-    }
-
-
-const char *LivingLifePage::findRandomFirstName( char *inString ) {
-	return findRandomName( inString, firstNames, firstNamesLen );
-    }
-
-const char *LivingLifePage::findRandomLastName( char *inString ) {
-	return findRandomName( inString, lastNames, lastNamesLen );
-    }
-
-	
-// AGEMOD NOTE:  Change 3/3 - Take these changes during the merge process
-void LivingLifePage::agePanel( LiveObject* ourLiveObject, char displayPanel ) {
-	if ( ! displayPanel ) return;
-	setDrawColor( 1, 1, 1, 1 );
-	doublePair agePos = { lastScreenViewCenter.x + ( recalcOffsetX( 85 ) * gui_fov_scale ), 
-						  lastScreenViewCenter.y - ( recalcOffsetY( 300 ) * gui_fov_scale ) };
-	drawSprite( mYumSlipSprites[2], agePos, 1.4 * gui_fov_scale_hud );
-	setDrawColor( 0, 0, 0, 1 );
-	char *ageString = autoSprintf( "AGE: %d", (int)computeCurrentAge( ourLiveObject ) );
-	agePos.y += 18 * gui_fov_scale_hud;
-	handwritingFont->drawString( ageString, agePos, alignCenter);
-    }
-	
-	
-// LINEAGEFERTILITYMOD NOTE:  Change 4/4 - Take these lines during the merge process
-char* LivingLifePage::getFertilityStatus( LiveObject* targetObject ) {
-	char *fertilityStatus = autoSprintf("INCAPABLE");
-	char isTargetMale = getObject( targetObject->displayID )->male;
-	if( isTargetMale ) return fertilityStatus;
-	if( targetObject->finalAgeSet ) {
-		setDrawColor( 1, 0, 0, 1 );
-		fertilityStatus = autoSprintf( "DEAD" );
-        }
-	else {
-		double targetAge = computeCurrentAge( targetObject );
-		if( targetAge < 14 ) {
-			setDrawColor( 0.93, 0.46, 0, 1 );
-			fertilityStatus = autoSprintf("TOO YOUNG");
-            }
-		else if ( targetAge > 40 ) {
-			setDrawColor( 1, 0, 0, 1 );
-			fertilityStatus = autoSprintf("TOO OLD");
-            }
-		else {
-			setDrawColor( 0, 0.39, 0, 1 );
-			fertilityStatus = autoSprintf("FERTILE");
-		    }
-	    }
-	return fertilityStatus;
-    }
-
-
-void LivingLifePage::lineageFertilityPanel( LiveObject* ourLiveObject, char displayPanel ) {
-	if ( ! displayPanel ) return;
-	setDrawColor( 1, 1, 1, 1 );
-	doublePair fertPos = { lastScreenViewCenter.x + ( recalcOffsetX( 685, true ) * gui_fov_scale ), 
-						   lastScreenViewCenter.y + ( recalcOffsetY( 305 ) * gui_fov_scale ) };
-	drawSprite( mHintSheetSprites[2], fertPos, gui_fov_scale_hud );
-	setDrawColor( 0, 0, 0, 1 );
-	char *fertStringA = autoSprintf( "MOTHER IS:  " );
-	doublePair fertTextPos = { fertPos.x -= ( 300 * gui_fov_scale_hud ), 
-							   fertPos.y += ( 28 * gui_fov_scale_hud ) };
-	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
-	SimpleVector<int> ourLin = ourLiveObject->lineage;
-	int relatedYoungFemales = 0;
-	int relatedFertileFemales = 0;
-	char *fertStringB = autoSprintf( "" );
-	if( ourLin.size() > 0 ) {
-		char found = false;
-		for( int i=0; i<ourLin.size(); i++ ) {
-			LiveObject *thisRelative = getLiveObject(ourLin.getElementDirect(i));
-			if( thisRelative != NULL && ! getObject( thisRelative->displayID )->male ) {
-				if( stringCompareIgnoreCase(thisRelative->relationName, "YOUR MOTHER" ) == 0 ) {
-					found = true;
-					fertStringB = autoSprintf( "%s", getFertilityStatus( thisRelative ) );
-				    }
-			    }
-		    }
-		if( ! found ) {
-			setDrawColor( 1, 0, 0, 1 );
-			fertStringB = autoSprintf( "DEAD" );
-		    }
-	} else {
-		setDrawColor( 0, 0, 1, 1 );
-		fertStringB = autoSprintf("NONE (EVE)");
-	    }
-	fertTextPos.x += handwritingFont->measureString( fertStringA );
-	handwritingFont->drawString( fertStringB, fertTextPos, alignLeft );
-	setDrawColor( 0, 0, 0, 1);
-	fertTextPos.x -= handwritingFont->measureString( fertStringA );
-	
-	fertStringA = autoSprintf( "PREGNANCY:  " );
-	fertTextPos.y -= handwritingFont->getFontHeight() / 1.25;
-	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
-	fertTextPos.x += handwritingFont->measureString( fertStringA );
-	fertStringB = autoSprintf( "%s", getFertilityStatus( ourLiveObject ) );
-	handwritingFont->drawString( fertStringB, fertTextPos, alignLeft );
-	fertTextPos.x -= handwritingFont->measureString( fertStringA );
-	setDrawColor( 0, 0, 0, 1);
-	
-	for( int i=0; i<gameObjects.size(); i++ ) {
-		LiveObject *thisPlayer = gameObjects.getElement( i );
-		if( thisPlayer != NULL ) {
-			char isPlayerMale = getObject( thisPlayer->displayID )->male;
-			if( ! isPlayerMale && thisPlayer->id != ourID && thisPlayer->relationName != NULL) {
-				if( stringCompareIgnoreCase(thisPlayer->relationName, "YOUR" ) > 0 ) {
-					if( thisPlayer->age < 14 ) {
-						relatedYoungFemales++;
-					    }
-					if ( thisPlayer->age > 13 && thisPlayer->age < 40 ) {
-						relatedFertileFemales++;
-					    }
-				    }
-			    }
-		    }
-	    }
-	
-	fertStringA = autoSprintf( "RELATED GIRL KIDS:  %d", relatedYoungFemales );
-	fertTextPos.y -= handwritingFont->getFontHeight() / 1.25;
-	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
-	
-	fertStringA = autoSprintf( "FERTILE RELATIVES:  %d", relatedFertileFemales );
-	fertTextPos.y -= handwritingFont->getFontHeight() / 1.25;
-	handwritingFont->drawString( fertStringA, fertTextPos, alignLeft );
-    }
-
 
 
 void LivingLifePage::calcFontScale( float newScale, Font *font ) {
@@ -22308,10 +22020,12 @@ void LivingLifePage::calcFontScale( float newScale, Font *font ) {
     }
 
 void LivingLifePage::changeFOV( float newScale ) {
-	if( newScale < 1.f )
-		newScale = 1.f;
-	else if( newScale > 6.f )
-		newScale = 6.f;
+	float fov_max = SettingsManager::getFloatSetting( "fovMax", 2.25f );
+	
+	if( newScale < 1.0f )
+		newScale = 1.0f;
+	else if( newScale > fov_max )
+		newScale = fov_max;
 	SettingsManager::setSetting( "fovScale", newScale );
 
 	LiveObject *ourLiveObject = getOurLiveObject();
@@ -22336,8 +22050,28 @@ void LivingLifePage::changeFOV( float newScale ) {
 	calcFontScale( newScale, handwritingFont );
 	calcFontScale( newScale, pencilFont );
 	calcFontScale( newScale, pencilErasedFont );
+	
+	calcFontScale( newScale, mainFont );
+	calcFontScale( newScale, titleFont );
+	
 	gui_fov_scale = newScale;
 	gui_fov_scale_hud = gui_fov_scale / gui_fov_target_scale_hud;
+
+	minitech::viewWidth = 1280 * newScale;
+	minitech::viewHeight = 720 * newScale;
+	minitech::guiScale = 1.25 * newScale;
+
+	minitech::handwritingFont->setScaleFactor( newScale * minitech::handwritingFont->getScaleFactor() / gui_fov_scale );
+	minitech::mainFont->setScaleFactor( newScale * minitech::mainFont->getScaleFactor() / gui_fov_scale );
+
+	//minitech::handwritingFont = new Font( "font_handwriting_32_32.tga", 3, 6, false, 16*minitech::guiScale );
+	//minitech::handwritingFont->setMinimumPositionPrecision( 1 );
+	//minitech::mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16*minitech::guiScale );
+	//minitech::mainFont->setMinimumPositionPrecision( 1 );	
+	minitech::tinyHandwritingFont = new Font( "font_handwriting_32_32.tga", 3, 6, false, 16/2*minitech::guiScale );
+	//minitech::tinyHandwritingFont->setMinimumPositionPrecision( 1 );
+	minitech::tinyMainFont = new Font( getFontTGAFileName(), 6, 16, false, 16/2*minitech::guiScale );
+	//minitech::tinyMainFont->setMinimumPositionPrecision( 1 );
 
 	calcOffsetHUD();
 
@@ -22348,10 +22082,12 @@ void LivingLifePage::changeFOV( float newScale ) {
     }
 
 void LivingLifePage::changeHUDFOV( float newScale ) {
+	float fov_max = SettingsManager::getFloatSetting( "fovMax", 2.25f );
+	
 	if( newScale < 1 ) {
 		newScale = 1.0f;
-	} else if ( newScale > 6 ) {
-		newScale = 6.0f;
+	} else if ( newScale > fov_max ) {
+		newScale = fov_max;
 	}
 
 	gui_fov_target_scale_hud = newScale;

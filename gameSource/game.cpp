@@ -235,9 +235,6 @@ void setFOVScale() {
 }
 
 
-
-
-
 // fraction of viewWidth visible vertically (aspect ratio)
 double viewHeightFraction;
 
@@ -1690,21 +1687,8 @@ void drawFrame( char inUpdate ) {
                         autoLogIn = false;
                         }
 
-                    if( binVersionNumber == expectedVersionNumber || true ) { 
-                        currentGamePage = existingAccountPage;
-                        currentGamePage->base_makeActive( true );
-                        }
-                    else if( binVersionNumber > expectedVersionNumber ) {
-                        currentGamePage = finalMessagePage;                        
-                        finalMessagePage->setMessageKey( "upgradeMessage" );
-                        finalMessagePage->setSubMessage( "IT LOOKS LIKE YOU UPDATED THE MOD##BEFORE DOWNLOADING THE LATEST GAME UPDATE.####USE YOUR UN-MODDED CLIENT TO UPDATE FIRST.##(DON'T FORGET TO CLEAR ANY CUSTOM SERVER SETTINGS!)" );
-                        currentGamePage->base_makeActive( true );
-                        }
-                    else {
-                        currentGamePage = finalMessagePage;                        
-                        finalMessagePage->setMessageKey( "upgradeMessage" );
-                        finalMessagePage->setSubMessage( autoSprintf( "THIS VERSION OF THE MOD IS OUTDATED##(EXPECTING VERSION %d - RUNNING VERSION %d)##PLEASE DOWNLOAD A NEWER VERSION FROM:####HTTPS://GITHUB.COM/AWBZ/ONELIFE/RELEASES/LATEST", expectedVersionNumber, binVersionNumber ) );
-                        currentGamePage->base_makeActive( true );
+                    currentGamePage = existingAccountPage;
+                    currentGamePage->base_makeActive( true );
                     }
                 }
             }

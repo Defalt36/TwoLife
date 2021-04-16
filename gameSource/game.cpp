@@ -1689,7 +1689,6 @@ void drawFrame( char inUpdate ) {
 
                     currentGamePage = existingAccountPage;
                     currentGamePage->base_makeActive( true );
-                    }
                 }
             }
         else if( currentGamePage == settingsPage ) {

@@ -3024,7 +3024,6 @@ void LivingLifePage::drawChalkBackgroundString( doublePair inPos,
         return;
         }
 
-    // FOVMOD NOTE:  Change 5/27 - Take these lines during the merge process
     double lineSpacing = handwritingFont->getFontHeight() / 2 + ( 5 * gui_fov_scale_hud );
     
     double firstLineY =  inPos.y + ( lines->size() - 1 ) * lineSpacing;
@@ -5033,6 +5032,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 	if ( resetScale ) {
 		changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
+		changeHUDFOV( SettingsManager::getFloatSetting( "fovScaleHUD", 1.25f ) );
 		resetScale = false;
 		}
 
@@ -8156,7 +8156,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
             
 
             setDrawColor( 1, 1, 1, 1 );
-            // FOVMOD NOTE:  Change 15/27 - Take these lines during the merge process
+            //FOV
             // Hint sheets have to be manually cut off in centered mode.
 			if( gui_hud_mode != 0 && gui_fov_target_scale_hud > 1.0f ) {
 				doublePair sheetPos[4] = {
@@ -8663,7 +8663,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-        // FOVMOD NOTE:  Change 22/27 - Take these lines during the merge process
         doublePair atePos = { lastScreenViewCenter.x, 
                               lastScreenViewCenter.y - ( recalcOffsetY( 347 ) * gui_fov_scale )};
         
@@ -19732,7 +19731,7 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         return;
         }
     
-	// FOVMOD NOTE:  Change 25/27 - Take these lines during the merge process
+	//FOV
     int mouseButton = getLastMouseButton();
 	if( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) {
 		float currentScale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
@@ -21536,14 +21535,12 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 }
             break;
         case 96: { // grave
-        // FOVMOD NOTE:  Change 26/27 - Take these lines during the merge process
             gui_hud_mode = SettingsManager::getIntSetting( "hudDrawMode", 0 );
             gui_hud_mode = abs( ( gui_hud_mode + 1 ) % 3 );
             SettingsManager::setSetting( "hudDrawMode", gui_hud_mode );
 			calcOffsetHUD();
             }
             break;
-            }
         case 9: // tab
             if( mCurrentHintObjectID != 0 ) {
                 
@@ -21801,7 +21798,7 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
         return;
         }
 		
-    // FOVMOD NOTE:  Change 27/27 - Take these lines during the merge process
+    //FOV
     if( inKeyCode == MG_KEY_F1) {
         sendToServerSocket( (char*)"EMOT 0 0 0#" );
         return;

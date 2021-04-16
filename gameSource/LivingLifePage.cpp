@@ -5040,8 +5040,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
 
 	if ( resetScale ) {
-		changeFOV( 1.5f );
-		changeHUDFOV( 1.0f );
+		changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
 		resetScale = false;
 		}
 
@@ -15533,8 +15532,7 @@ void LivingLifePage::step() {
                          strstr( lines[i], "X X" ) != NULL  ) {
                     // we died
 					
-					changeFOV( 1.5f );
-					changeHUDFOV( 1.0f );
+					changeFOV( SettingsManager::getFloatSetting( "fovDefault", 1.25f ) );
 
                     printf( "Got X X death message for our ID %d\n",
                             ourID );
@@ -19764,6 +19762,24 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
         return;
         }
     
+	// FOVMOD NOTE:  Change 25/27 - Take these lines during the merge process
+    int mouseButton = getLastMouseButton();
+	if( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) {
+		float currentScale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
+		float newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentScale -= 0.25f : currentScale += 0.25f;
+		if ( isShiftKeyDown() ) {
+			newScale = ( mouseButton == MouseButton::WHEELUP ) ? SettingsManager::getFloatSetting( "fovDefault", 1.25f ) : SettingsManager::getFloatSetting( "fovMax", 2.25f );
+            }
+        if ( isCommandKeyDown() ) {
+            float currentHUDScale = SettingsManager::getFloatSetting( "fovScaleHUD", 1.25f );
+            newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentHUDScale -= 0.25f : currentHUDScale += 0.25f;
+            changeHUDFOV( newScale );
+        } else {
+            changeFOV( newScale );
+            }
+		return;
+	}
+	
     if( vogMode ) {
         return;
         }
@@ -19773,24 +19789,6 @@ void LivingLifePage::pointerDown( float inX, float inY ) {
     if( ( mEKeyDown && mEKeyEnabled ) || isLastMouseButtonRight() ) {
         modClick = true;
         }
-
-    // FOVMOD NOTE:  Change 25/27 - Take these lines during the merge process
-    int mouseButton = getLastMouseButton();
-	if( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) {
-		float currentScale = SettingsManager::getFloatSetting( "fovScale", 1.0f );
-		float newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentScale -= 0.25f : currentScale += 0.25f;
-		if ( isShiftKeyDown() ) {
-			newScale = ( mouseButton == MouseButton::WHEELUP ) ? SettingsManager::getFloatSetting( "fovDefault", 1.25f ) : SettingsManager::getFloatSetting( "fovMax", 2.25f );
-            }
-        if ( isCommandKeyDown() ) {
-            float currentHUDScale = SettingsManager::getFloatSetting( "fovScaleHUD", 1.0f );
-            newScale = ( mouseButton == MouseButton::WHEELUP ) ? currentHUDScale -= 0.25f : currentHUDScale += 0.25f;
-            changeHUDFOV( newScale );
-        } else {
-            changeFOV( newScale );
-            }
-		return;
-	}
     
     mLastMouseOverID = 0;
     
@@ -21875,7 +21873,7 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
             newScale = ( inKeyCode == MG_KEY_LEFT ) ? SettingsManager::getFloatSetting( "fovDefault", 1.25f ) : SettingsManager::getFloatSetting( "fovMax", 2.25f );
             }
         if ( isCommandKeyDown() ) {
-            float currentHUDScale = SettingsManager::getFloatSetting( "fovScaleHUD", 1.0f );
+            float currentHUDScale = SettingsManager::getFloatSetting( "fovScaleHUD", 1.25f );
             newScale = ( inKeyCode == MG_KEY_LEFT ) ? currentHUDScale -= 0.25f : currentHUDScale += 0.25f;
             changeHUDFOV( newScale );
         } else {
@@ -22059,19 +22057,12 @@ void LivingLifePage::changeFOV( float newScale ) {
 
 	minitech::viewWidth = 1280 * newScale;
 	minitech::viewHeight = 720 * newScale;
-	minitech::guiScale = 1.25 * newScale;
+	minitech::guiScale = 1.25 * gui_fov_scale_hud;
 
-	minitech::handwritingFont->setScaleFactor( newScale * minitech::handwritingFont->getScaleFactor() / gui_fov_scale );
-	minitech::mainFont->setScaleFactor( newScale * minitech::mainFont->getScaleFactor() / gui_fov_scale );
-
-	//minitech::handwritingFont = new Font( "font_handwriting_32_32.tga", 3, 6, false, 16*minitech::guiScale );
-	//minitech::handwritingFont->setMinimumPositionPrecision( 1 );
-	//minitech::mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16*minitech::guiScale );
-	//minitech::mainFont->setMinimumPositionPrecision( 1 );	
-	minitech::tinyHandwritingFont = new Font( "font_handwriting_32_32.tga", 3, 6, false, 16/2*minitech::guiScale );
-	//minitech::tinyHandwritingFont->setMinimumPositionPrecision( 1 );
-	minitech::tinyMainFont = new Font( getFontTGAFileName(), 6, 16, false, 16/2*minitech::guiScale );
-	//minitech::tinyMainFont->setMinimumPositionPrecision( 1 );
+	minitech::handwritingFont->setScaleFactor( 16*minitech::guiScale );
+	minitech::mainFont->setScaleFactor( 16*minitech::guiScale );
+	minitech::tinyHandwritingFont->setScaleFactor( 16/2*minitech::guiScale );
+	minitech::tinyMainFont->setScaleFactor( 16/2*minitech::guiScale );
 
 	calcOffsetHUD();
 
@@ -22081,13 +22072,11 @@ void LivingLifePage::changeFOV( float newScale ) {
 	setViewSize( 1280 * newScale );
     }
 
-void LivingLifePage::changeHUDFOV( float newScale ) {
-	float fov_max = SettingsManager::getFloatSetting( "fovMax", 2.25f );
-	
+void LivingLifePage::changeHUDFOV( float newScale ) {	
 	if( newScale < 1 ) {
 		newScale = 1.0f;
-	} else if ( newScale > fov_max ) {
-		newScale = fov_max;
+	} else if ( newScale > 1.75f ) {
+		newScale = 1.75f;
 	}
 
 	gui_fov_target_scale_hud = newScale;
@@ -22099,6 +22088,8 @@ void LivingLifePage::changeHUDFOV( float newScale ) {
 	handwritingFont = new Font( "font_handwriting_32_32.tga", 3, 6, false, 16 * gui_fov_scale_hud );
 	pencilFont->copySpacing( handwritingFont );
 	pencilErasedFont->copySpacing( handwritingFont );
+	
+	changeFOV( SettingsManager::getFloatSetting( "fovScale", 1.0f ) );
     }
 
 void LivingLifePage::calcOffsetHUD() {

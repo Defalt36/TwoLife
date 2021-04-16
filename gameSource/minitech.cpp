@@ -956,7 +956,7 @@ void minitech::updateDrawTwoTech() {
 		
 		recWidth = paddingX + 7*iconSize + paddingX;
 		recHeight = paddingY + 1*iconSize + paddingY;
-		posLT.y = posLT.y + recHeight + (60 * guiScale); //panel height = 60
+		posLT.y = posLT.y + recHeight + (55 * guiScale); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
 		setDrawColor( 0, 0, 0, 0.8 );
@@ -982,7 +982,7 @@ void minitech::updateDrawTwoTech() {
 		recWidth = paddingX + 7*iconSize + paddingX;
 		recHeight = paddingY + (numOfLines-1)*lineSpacing + numOfLines*iconSize + buttonHeight + paddingY;
 		
-		posLT.y = posLT.y + recHeight + (60 * guiScale); //panel height = 60
+		posLT.y = posLT.y + recHeight + (55 * guiScale); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};

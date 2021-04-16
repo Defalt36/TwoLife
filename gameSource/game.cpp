@@ -232,8 +232,6 @@ void setFOVScale() {
     viewWidth = 1280 * gui_fov_scale;
     viewHeight = 720 * gui_fov_scale;
     visibleViewWidth = viewWidth;
-	
-	SettingsManager::setSetting( "fovScaleHUD", gui_fov_target_scale_hud );
 }
 
 
@@ -896,7 +894,7 @@ static void drawPauseScreen() {
         
         drawPos = add( drawPos, lastScreenViewCenter );
 
-        drawSprite( instructionsSprite, drawPos );
+        drawSprite( instructionsSprite, drawPos, gui_fov_scale );
         }
     
 

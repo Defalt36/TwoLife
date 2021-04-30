@@ -486,6 +486,40 @@ class LivingLifePage : public GamePage, public ActionListener {
         int getRequiredVersion() {
             return mRequiredVersion;
             }
+			
+		void hetuwSetNextActionMessage( const char* str, int x, int y );
+		void hetuwSetNextActionDropping( bool b );
+		void hetuwSetNextActionEating( bool b );
+		int hetuwGetMapI( int tileX, int tileY );
+		int hetuwGetObjId( int mapX, int mapY );
+		void hetuwClickMove( float x, float y );
+		void hetuwGetMouseXY( int &x, int &y );
+		bool hetuwMouseIsDown();
+		
+		void movementStep();
+		
+		void actionAlphaRelativeToMe( int x, int y );
+		void actionBetaRelativeToMe( int x, int y );
+		bool isCharKey(unsigned char c, unsigned char key) ;
+		bool objIdReverseAction( int objId ) ;
+
+		void pickUpBaby( int x, int y ) ;
+		void pickUpBabyInRange() ;
+		void useTileRelativeToMe( int x, int y ) ;
+		void dropTileRelativeToMe( int x, int y ) ;
+		void useBackpack( bool replace = false ) ;
+		void usePocket( int clothingID ) ;
+		void useOnSelf() ;
+		void setOurSendPosXY(int &x, int &y) ;
+		void takeOffBackpack() ;
+		
+		bool tileHasClosedDoor(int x, int y);
+		int getMoveDirection();
+		bool findNextMove(int &x, int &y, int dir);
+		bool dirIsSafeToWalk(int x, int y, int dir);
+		void setMoveDirection(int &x, int &y, int direction);
+		bool setMoveDirIfSafe(int &x, int &y, int dir);
+		int getNextMoveDir(int direction, int add);																  
 
 		doublePair minitechGetLastScreenViewCenter();
 		char *minitechGetDisplayObjectDescription(int objId);
@@ -533,14 +567,15 @@ class LivingLifePage : public GamePage, public ActionListener {
         // conversion function for received coordinates into local coords
         void applyReceiveOffset( int *inX, int *inY );
         // converts local coors for sending back to server
+		public:
+		
         int sendX( int inX );
         int sendY( int inY );
 
 
         int mMapD;
-		public: // minitech
         int *mMap;
-        protected: // minitech
+        protected:
         int *mMapBiomes;
         int *mMapFloors;
 

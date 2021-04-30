@@ -7,7 +7,6 @@
 #include "minorGems/ui/event/ActionListener.h"
 #include "minorGems/util/SimpleVector.h"
 
-// FOVMOD NOTE:  Change 1/3 - Take these lines during the merge process
 #include "minorGems/util/SettingsManager.h"
 
 #include "minorGems/game/game.h"
@@ -40,10 +39,7 @@
 
 #define NUM_YUM_SLIPS 4
 
-// FOVMOD NOTE:  Change 2/3 - Take these lines during the merge process
-// Some global constants to make the FOV mod work.  Scale can be anything from 1.0-6.0.
-// Vanilla scale of 1 is 1280x720, 1.5 is 1920x1080, 2 is 2560x1440, 3 is 4k, 6 is 8k
-// Scales above 2 will have significantly more "edge screen popping"
+//FOV
 namespace fovmod {
     extern float gui_fov_scale;
     extern int gui_fov_scale_hud;
@@ -487,39 +483,34 @@ class LivingLifePage : public GamePage, public ActionListener {
             return mRequiredVersion;
             }
 			
-		void hetuwSetNextActionMessage( const char* str, int x, int y );
-		void hetuwSetNextActionDropping( bool b );
-		void hetuwSetNextActionEating( bool b );
-		int hetuwGetMapI( int tileX, int tileY );
-		int hetuwGetObjId( int mapX, int mapY );
-		void hetuwClickMove( float x, float y );
-		void hetuwGetMouseXY( int &x, int &y );
-		bool hetuwMouseIsDown();
-		
-		void movementStep();
+
+		void setNextActionMessage( const char* str, int x, int y );
+		int getObjId( int mapX, int mapY );
+		bool objIdReverseAction( int objId );
+		void pickUpBabyInRange();
+		void pickUpBaby( int x, int y );
+		void useBackpack( bool replace = false );
+		void usePocket( int clothingID );
+		void useOnSelf();
+		void takeOffBackpack();
+		void setOurSendPosXY(int &x, int &y);
+		bool isCharKey(unsigned char c, unsigned char key);
 		
 		void actionAlphaRelativeToMe( int x, int y );
 		void actionBetaRelativeToMe( int x, int y );
-		bool isCharKey(unsigned char c, unsigned char key) ;
-		bool objIdReverseAction( int objId ) ;
-
-		void pickUpBaby( int x, int y ) ;
-		void pickUpBabyInRange() ;
 		void useTileRelativeToMe( int x, int y ) ;
 		void dropTileRelativeToMe( int x, int y ) ;
-		void useBackpack( bool replace = false ) ;
-		void usePocket( int clothingID ) ;
-		void useOnSelf() ;
-		void setOurSendPosXY(int &x, int &y) ;
-		void takeOffBackpack() ;
 		
-		bool tileHasClosedDoor(int x, int y);
-		int getMoveDirection();
+		void movementStep();
 		bool findNextMove(int &x, int &y, int dir);
-		bool dirIsSafeToWalk(int x, int y, int dir);
-		void setMoveDirection(int &x, int &y, int direction);
+		int getNextMoveDir(int direction, int add);
+		int getMoveDirection();
 		bool setMoveDirIfSafe(int &x, int &y, int dir);
-		int getNextMoveDir(int direction, int add);																  
+		void setMoveDirection(int &x, int &y, int direction);
+		bool tileHasClosedDoor(int x, int y);
+		bool dirIsSafeToWalk(int x, int y, int dir);
+
+
 
 		doublePair minitechGetLastScreenViewCenter();
 		char *minitechGetDisplayObjectDescription(int objId);
@@ -567,15 +558,19 @@ class LivingLifePage : public GamePage, public ActionListener {
         // conversion function for received coordinates into local coords
         void applyReceiveOffset( int *inX, int *inY );
         // converts local coors for sending back to server
-		public:
 		
+	public:
+        
         int sendX( int inX );
         int sendY( int inY );
 
 
         int mMapD;
+		
         int *mMap;
-        protected:
+        
+	protected:
+        
         int *mMapBiomes;
         int *mMapFloors;
 
@@ -989,7 +984,7 @@ class LivingLifePage : public GamePage, public ActionListener {
         char mZKeyDown;
 
         
-        // FOVMOD NOTE:  Change 1/1 - Take these changes during the merge process
+        //FOV
         void changeHUDFOV( float newScale = 1.0f );
         void changeFOV( float newScale = 1.0f );
         void calcOffsetHUD();

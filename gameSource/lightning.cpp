@@ -109,7 +109,7 @@ ColorInfo getDrawSpecifics(int cellX, int cellY, float darkness, int time) {
 	c.additive = false;
 
 	float modifier = 1;
-	if (time % 5 == 0 || time % 11 == 0) {
+	if (time % 23 == 0 || time % 11 == 0) {
 		modifier = 0.95f; //time is only used to flick the light
 	}
 	

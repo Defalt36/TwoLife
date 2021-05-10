@@ -87,6 +87,7 @@ static int night_frequency = 36;
 
 static int daylightMode = -1;
 static int c_timezone = -1;
+static float lightIntensity = 1.0f;
 
 static int requestedServerTime = -1;
 static int serverTimeOffset = 0;
@@ -4937,6 +4938,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 	//only load once
 	if (daylightMode == -1) {
 		daylightMode = SettingsManager::getIntSetting( "daylightMode", 1 );
+		lightIntensity = SettingsManager::getFloatSetting("lightIntensity", 1.0f);
 		c_timezone = SettingsManager::getIntSetting( "timezone", 0 );
 		SetTimeSettings( SettingsManager::getFloatSetting( "nightDarkness", 0.75f ),
 						 SettingsManager::getIntSetting("nightFrequency", -1),
@@ -6776,7 +6778,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 					lightValue = lightValue > 3 ? lightValue : 3;
 				}
 				updateLightBlocker(worldX, worldY, isBlocker);
-				updateLightSource(worldX, worldY, lightValue);
+				updateLightSource(worldX, worldY, lightValue * lightIntensity);
 			}
 		}
 		

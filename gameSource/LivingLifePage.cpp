@@ -4937,7 +4937,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 	//only load once
 	if (daylightMode == -1) {
-		daylightMode = SettingsManager::getIntSetting( "daylightMode", 1 );
+		daylightMode = SettingsManager::getIntSetting( "daylightMode", 4 );
 		lightIntensity = SettingsManager::getFloatSetting("lightIntensity", 1.0f);
 		c_timezone = SettingsManager::getIntSetting( "timezone", 0 );
 		SetTimeSettings( SettingsManager::getFloatSetting( "nightDarkness", 0.75f ),

@@ -115,7 +115,7 @@
  
 #include <stdarg.h>
 #include <math.h>
-#include <values.h>
+#include <float.h>
 #include <stdint.h>
  
  
@@ -518,7 +518,7 @@ typedef struct TestMapRecord {
  
  
  
- 
+/* 
  
 // four ints to a 16-byte key
 void intQuadToKey( int inX, int inY, int inSlot, int inB,
@@ -579,7 +579,7 @@ timeSec_t valueToTime( unsigned char *inValue ) {
     // caste back to timeSec_t
     return doubleTime;
     }
- 
+*/ 
  
  
  
@@ -1387,7 +1387,7 @@ static int getBaseMap( int inX, int inY, char *outGridPlacement = NULL ) {
         // if gap is 1.0, it should never happen
  
         // larger values make second place less likely
-		double secondPlaceReduction = 10.0;
+		//double secondPlaceReduction = 10.0;
 
         //printf( "Second place gap = %f, random(%d,%d)=%f\n", secondPlaceGap,
         //        inX, inY, getXYRandom( 2087 + inX, 793 + inY ) );
@@ -5138,7 +5138,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             break;
                             }
                         else if( oID > 0 && getObject( oID ) != NULL &&
-                                 getObject( oID )->blocksWalking ) {
+                                 getObject( oID )->blocksMoving ) {
                             // blocked, stop now
                             break;
                             }
@@ -5240,7 +5240,7 @@ int checkDecayObject( int inX, int inY, int inID ) {
                                     break;
                                     }
                                 else if( oID > 0 && getObject( oID ) != NULL &&
-                                         getObject( oID )->blocksWalking ) {
+                                         getObject( oID )->blocksMoving ) {
                                     // blocked, stop now
                                     break;
                                     }
@@ -5268,8 +5268,8 @@ int checkDecayObject( int inX, int inY, int inID ) {
                 if( newX != inX || newY != inY ) {
                     // a reall move!
                    
-                    //printf( "Object moving from (%d,%d) to (%d,%d)\n",
-                    //        inX, inY, newX, newY );
+                    printf( "Object moving from (%d,%d) to (%d,%d)\n",
+                           inX, inY, newX, newY );
                    
                     // move object
                    
@@ -5337,7 +5337,9 @@ int checkDecayObject( int inX, int inY, int inID ) {
                             // no further decay
                             leftMapETA = 0;
                             }
-                        setEtaDecay( inX, inY, leftMapETA );
+						//for movement from posA to posB, we want posA to be potentially always live tracked as well
+						//leftDecayT is passed to check if it should be always live tracked
+                        setEtaDecay( inX, inY, leftMapETA, leftDecayT );
                         }
                     else {
                         // leave empty spot behind
@@ -6492,6 +6494,31 @@ static char runTapoutOperation( int inX, int inY,
             
             if( newTarget != -1 ) {
                 setMapObjectRaw( x, y, newTarget );
+				
+				TransRecord *newDecayT = getMetaTrans( -1, newTarget );
+				
+				timeSec_t mapETA = 0;
+	 
+				if( newDecayT != NULL ) {
+	 
+					// add some random variation to avoid lock-step
+					// especially after a server restart
+					int tweakedSeconds =
+						randSource.getRandomBoundedInt(
+							lrint( newDecayT->autoDecaySeconds * 0.9 ),
+							newDecayT->autoDecaySeconds );
+				   
+					if( tweakedSeconds < 1 ) {
+						tweakedSeconds = 1;
+						}
+					mapETA = MAP_TIMESEC + tweakedSeconds;
+					}
+				else {
+					// no further decay
+					mapETA = 0;
+					}          
+	 
+				setEtaDecay( x, y, mapETA, newDecayT );
                 }
             }
         }

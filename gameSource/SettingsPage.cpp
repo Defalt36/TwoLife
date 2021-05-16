@@ -22,20 +22,23 @@ extern float musicLoudness;
 
 
 SettingsPage::SettingsPage()
-        : mBackButton( mainFont, -542, -280, translate( "backButton" ) ),
+        : mInfoSeeds( mainFont, 542, -150, "?" ),
+		  mBackButton( mainFont, -542, -280, translate( "backButton" ) ),
           mEditAccountButton( mainFont, -463, 129, translate( "editAccount" ) ),
           mRestartButton( mainFont, 128, 128, translate( "restartButton" ) ),
           mRedetectButton( mainFont, 153, 249, translate( "redetectButton" ) ),
           mFullscreenBox( 0, 128, 4 ),
           mBorderlessBox( 0, 168, 4 ),
           mEnableNudeBox( -335, 148, 4 ),
+		  mEnableFOVBox( 561, 128, 3),
+		  mEnableKActionsBox( 561, 90, 3),
           mMusicLoudnessSlider( mainFont, 0, 40, 4, 200, 30,
                                 0.0, 1.0, 
                                 translate( "musicLoudness" ) ),
           mSoundEffectsLoudnessSlider( mainFont, 0, -48, 4, 200, 30,
                                        0.0, 1.0, 
                                        translate( "soundLoudness" ) ),
-          mSpawnSeed( mainFont, 306, -150, 14, false, 
+          mSpawnSeed( mainFont, 226, -150, 14, false, 
                                      translate( "spawnSeed" ),
                                      NULL,
                                      // forbid spaces
@@ -63,10 +66,14 @@ SettingsPage::SettingsPage()
     mCursorScaleSlider.toggleField( false );
 
 
+	setButtonStyle( &mInfoSeeds );
     setButtonStyle( &mBackButton );
     setButtonStyle( &mEditAccountButton );
     setButtonStyle( &mRestartButton );
     setButtonStyle( &mRedetectButton );
+
+	addComponent( &mInfoSeeds);
+	mInfoSeeds.addActionListener( this );
 
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
@@ -82,6 +89,12 @@ SettingsPage::SettingsPage()
 
     addComponent( &mEnableNudeBox );
     mEnableNudeBox.addActionListener( this );
+	
+	addComponent( &mEnableFOVBox );
+    mEnableFOVBox.addActionListener( this );
+	
+	addComponent( &mEnableKActionsBox );
+    mEnableKActionsBox.addActionListener( this );
 
     addComponent( &mRestartButton );
     mRestartButton.addActionListener( this );
@@ -114,7 +127,16 @@ SettingsPage::SettingsPage()
         SettingsManager::getIntSetting( "nudeEnabled", 1 );
 
     mEnableNudeBox.setToggled( mEnableNudeSetting );
+	
+	mEnableFOVSetting =
+        SettingsManager::getIntSetting( "fovEnabled", 1 );
+	
+	mEnableFOVBox.setToggled( mEnableFOVSetting );
     
+	mEnableKActionsSetting =
+        SettingsManager::getIntSetting( "keyboardActions", 1 );
+	
+	mEnableKActionsBox.setToggled( mEnableKActionsSetting );
     
 
     addComponent( &mMusicLoudnessSlider );
@@ -147,6 +169,13 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         setSignal( "back" );
         setMusicLoudness( 0 );
         }
+	else if( inTarget == &mInfoSeeds ) {
+		 char *url = strdup("https://twohoursonelife.fandom.com/wiki/Spawn_seeds");
+		 
+		 if( strcmp( url, "" ) != 0 ) {
+			 launchURL( url );
+			}
+		}
     else if( inTarget == &mEditAccountButton ) {
         
         setSignal( "editAccount" );
@@ -174,6 +203,16 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         SettingsManager::setSetting( "nudeEnabled", newSetting );
         
         mRestartButton.setVisible( mEnableNudeSetting != newSetting );
+        }
+	else if( inTarget == &mEnableFOVBox ) {
+        int newSetting = mEnableFOVBox.getToggled();
+        
+        SettingsManager::setSetting( "fovEnabled", newSetting );
+        }
+	else if( inTarget == &mEnableKActionsBox ) {
+        int newSetting = mEnableKActionsBox.getToggled();
+        
+        SettingsManager::setSetting( "keyboardActions", newSetting );
         }
     else if( inTarget == &mRestartButton ||
              inTarget == &mRedetectButton ) {
@@ -320,6 +359,20 @@ void SettingsPage::draw( doublePair inViewCenter,
     pos.y -= 2;
 
     mainFont->drawString( "Enable Nudity", pos, alignRight );
+	
+	pos = mEnableFOVBox.getPosition();
+    
+    pos.x -= 30;
+    pos.y -= 2;
+
+    mainFont->drawString( "Enable FOV", pos, alignRight );
+	
+	pos = mEnableKActionsBox.getPosition();
+    
+    pos.x -= 30;
+    pos.y -= 2;
+
+    mainFont->drawString( "Keyboard Actions", pos, alignRight );
 
 
     pos = mCursorModeSet->getPosition();

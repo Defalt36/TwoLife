@@ -86,6 +86,12 @@ typedef struct ObjectRecord {
         // true for objects that cannot be walked through
         char blocksWalking;
         
+        // true for objects that moving objects (like animals) can't pass
+        // through.  All blocksWalking objects, plus some others that people
+        // can walk through.
+        char blocksMoving;
+        
+
         // true if sticks out and blocks on left or right of center tile
         char wide;
         
@@ -395,7 +401,9 @@ typedef struct ObjectRecord {
 		
 		char isTapOutTrigger;
 		
-		char noBackAccess;
+        char autoDefaultTrans;
+
+        char noBackAccess;
         
         //2HOL additions for: password-protected doors      
         //true for object that can transition into password-bearer, similar to how "writtable" and "written" flags are related
@@ -406,6 +414,10 @@ typedef struct ObjectRecord {
         char hasInGamePassword;
         int passID;
         
+		//2HOL mechanics to read written objects
+		char clickToRead;
+		char passToRead;
+		
         SimpleVector<int> IndX;
         SimpleVector<int> IndY;
         SimpleVector<char*> IndPass;
@@ -798,12 +810,14 @@ float getBiomeHeatValue( int inBiome );
 
 
 // offset of object pixel center from 0,0
-// Note that this is computed as the center of centers, 
-// which is the only the approximate pixel center of the whole object.  
-// Long sprites that stick
-// out far from their centers, mixed with short sprites, will make 
-// it somewhat inaccurate, but good enough.
+// note that this is computed based on the center of the widest sprite
 doublePair getObjectCenterOffset( ObjectRecord *inObject );
+
+
+// this is computed based on the center of the lower-most sprite
+// in the object
+doublePair getObjectBottomCenterOffset( ObjectRecord *inObject );
+
 
 
 // gets the largest possible radius of all wide objects
@@ -844,6 +858,11 @@ void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
 
 
 char bothSameUseParent( int inAObjectID, int inBObjectID );
+
+
+// if this ID is a use dummy, gets the parent object ID
+int getObjectParent( int inObjectID );
+
 
 
 

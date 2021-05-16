@@ -85,6 +85,7 @@ static char shouldMoveCamera = true;
 //this will be overrided by the server equivalent
 static int night_frequency = 36;
 
+static int game_time;
 static int daylightMode = -1;
 static int c_timezone = -1;
 static float lightIntensity = 1.0f;
@@ -4952,7 +4953,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
 		daylightMode = -1;
 	}
 	
-	int game_time = fmod(game_getCurrentTime(), 86400);
+	game_time = fmod(game_getCurrentTime(), 86400);
 	int time_current;
 	if (daylightMode == 0 || daylightMode == 1) {
 		char *timeMessage = autoSprintf( "RTIME 0 0 0#");

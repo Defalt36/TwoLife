@@ -19726,7 +19726,10 @@ int main( int inNumArgs, const char **inArgs ) {
             int eveInjectionOn = 
                 SettingsManager::getIntSetting( "eveInjectionOn", 0 );
             
-            if( arcMilestone != -1 && ! eveInjectionOn ) {
+            int enableArcReport = 
+                SettingsManager::getIntSetting( "enableArcReport", 1 );
+            
+            if( arcMilestone != -1 && ! eveInjectionOn && enableArcReport ) {
 
                 int familyLimitAfterEveWindow = 
                     SettingsManager::getIntSetting( 

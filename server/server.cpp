@@ -25930,12 +25930,6 @@ int main( int inNumArgs, const char **inArgs ) {
                                         
                                         nextPlayer->foodStore = cap;
 
-                                        int overflowCap = 
-                                            computeOverflowFoodCapacity( cap );
-
-                                        if( over > overflowCap ) {
-                                            over = overflowCap;
-                                            }
                                         nextPlayer->yummyBonusStore += over;
                                         }
 
@@ -26947,12 +26941,6 @@ int main( int inNumArgs, const char **inArgs ) {
                                         
                                         targetPlayer->foodStore = cap;
 
-                                        int overflowCap = 
-                                            computeOverflowFoodCapacity( cap );
-
-                                        if( over > overflowCap ) {
-                                            over = overflowCap;
-                                            }
                                         targetPlayer->yummyBonusStore += over;
                                         }
                                     targetPlayer->foodDecrementETASeconds =

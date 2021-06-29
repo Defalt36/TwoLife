@@ -309,6 +309,9 @@ static int satisfiedEmotionIndex = 2;
 
 static int ghostEmotionIndex = 2;
 
+static int afkEmotionIndex = 2;
+static double afkTimeSeconds = 0;
+
 
 static double lastBabyPassedThresholdTime = 0;
 
@@ -1180,6 +1183,12 @@ typedef struct LiveObject {
         double forceFlightDestSetTime;
         
         SimpleVector<int> permanentEmots;
+				
+		//2HOL: last time player does something
+		double lastActionTime;
+		
+		//2HOL: player is either disconnected or inactive
+		bool isAFK;
 
         // emails of babies we had that did /DIE
         SimpleVector<char *> sidsBabyEmails;
@@ -11234,6 +11243,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.connected = true;
     newObject.error = false;
     newObject.errorCauseString = "";
+	
+	newObject.lastActionTime = Time::getCurrentTime();
+	newObject.isAFK = false;
     
     newObject.rodeRocket = false;
     
@@ -19263,6 +19275,11 @@ int main( int inNumArgs, const char **inArgs ) {
         SettingsManager::getIntSetting( "ghostEmotionIndex", 2 );
     
     useMainSettings();
+    afkEmotionIndex =
+        SettingsManager::getIntSetting( "afkEmotionIndex", 2 );
+
+    afkTimeSeconds =
+        SettingsManager::getDoubleSetting( "afkTimeSeconds", 120.0 );
 
 
     FILE *f = fopen( "curseWordList.txt", "r" );
@@ -21469,6 +21486,26 @@ int main( int inNumArgs, const char **inArgs ) {
                 ClientMessage m = parseMessage( nextPlayer, message );
                 
                 delete [] message;
+				
+				
+				//2HOL: Player not AFK
+				//Skipping EMOT because modded player sends EMOT automatically
+				if( m.type != EMOT ) {
+					//Clear afk emote if they were afk
+					if( nextPlayer->isAFK ) {
+
+						nextPlayer->emotFrozen = false;
+						nextPlayer->emotUnfreezeETA = 0;
+						
+						newEmotPlayerIDs.push_back( nextPlayer->id );
+						newEmotIndices.push_back( -1 );
+						newEmotTTLs.push_back( 0 );
+						
+						}
+					
+					nextPlayer->isAFK = false;
+					nextPlayer->lastActionTime = Time::getCurrentTime();
+					}
                 
 
                 //Thread::staticSleep( 
@@ -28008,8 +28045,29 @@ int main( int inNumArgs, const char **inArgs ) {
                 }
             }
         
-
-
+		//2HOL: check if player is afk
+		for( int i=0; i<numLive; i++ ) {
+			LiveObject *nextPlayer = players.getElement( i );
+			
+			if( nextPlayer->connected == false ||
+				( afkTimeSeconds > 0 &&
+				Time::getCurrentTime() - nextPlayer->lastActionTime > afkTimeSeconds ) ) {
+			
+				nextPlayer->isAFK = true;
+				
+				//Emotes from wound or starvation take priority
+				if( !nextPlayer->emotFrozen ) {
+					nextPlayer->emotFrozen = true;
+					nextPlayer->emotFrozenIndex = afkEmotionIndex;
+					nextPlayer->emotUnfreezeETA = afkTimeSeconds;
+					
+					newEmotPlayerIDs.push_back( nextPlayer->id );
+					newEmotIndices.push_back( afkEmotionIndex );
+					newEmotTTLs.push_back( afkTimeSeconds );
+					}
+				}
+			}
+			
         // now that messages have been processed for all
         // loop over and handle all post-message checks
 

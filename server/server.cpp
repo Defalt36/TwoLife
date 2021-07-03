@@ -6501,7 +6501,7 @@ SimpleVector<ChangePosition> newLocationSpeechPos;
 char *isCurseNamingSay( char *inSaidString );
 
 
-static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {    
+static void makePlayerSay( LiveObject *inPlayer, char *inToSay, bool inPrivate = false ) {    
                         
     if( inPlayer->lastSay != NULL ) {
         delete [] inPlayer->lastSay;
@@ -6847,7 +6847,8 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     newSpeechPlayerIDs.push_back( inPlayer->id );
 
                         
-    ChangePosition p = { inPlayer->xd, inPlayer->yd, false };
+    ChangePosition p = { inPlayer->xd, inPlayer->yd, false, -1 };
+	if( inPrivate ) p.responsiblePlayerID = inPlayer->id;
                         
     // if held, speech happens where held
     if( inPlayer->heldByOther ) {
@@ -6861,7 +6862,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
         }
 
     newSpeechPos.push_back( p );
-
+	if( inPrivate ) return;
 
 
     SimpleVector<int> pipesIn;
@@ -6908,7 +6909,7 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
                     newLocationSpeech.push_back( newSpeech );
                 
-                    ChangePosition outChangePos = { outPos.x, outPos.y, false };
+                    ChangePosition outChangePos = { outPos.x, outPos.y, false, -1 };
                     newLocationSpeechPos.push_back( outChangePos );
                     }
                 }
@@ -32053,6 +32054,10 @@ int main( int inNumArgs, const char **inArgs ) {
                         for( int u=0; u<newSpeechPos.size(); u++ ) {
 
                             ChangePosition *p = newSpeechPos.getElement( u );
+
+							if( p->responsiblePlayerID != -1 && 
+								p->responsiblePlayerID != nextPlayer->id ) 
+								continue;
                         
                             // speech never global
                             

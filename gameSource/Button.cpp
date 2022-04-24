@@ -190,7 +190,7 @@ void Button::drawContents() {
 
 
 void Button::drawBorder() {
-    if( mBracketCoverLength >= 0 ) {
+    if( mBracketCoverLength >= 0 && false ) {
         // one rect on either end
         drawRect( - mWide / 2, 
                   - mHigh / 2, 
@@ -237,6 +237,10 @@ void Button::pointerMove( float inX, float inY ) {
 
 
 void Button::pointerDown( float inX, float inY ) {
+    
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
+    
     if( isInside( inX, inY ) ) {
         mPressStartedHere = true;
         pointerDrag( inX, inY );

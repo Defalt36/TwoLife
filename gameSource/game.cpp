@@ -101,6 +101,8 @@ CustomRandomSource randSource( 34957197 );
 
 #include "whiteSprites.h"
 
+#include "message.h"
+
 
 // should we pull the map
 static char mapPullMode = 0;
@@ -117,6 +119,8 @@ char usingCustomServer = false;
 char *serverIP = NULL;
 int serverPort = 0;
 
+
+char useSpawnSeed;
 
 char *userEmail = NULL;
 char *accountKey = NULL;
@@ -199,15 +203,16 @@ void setFOVScale() {
 	else if( gui_hud_mode > 2 ) gui_hud_mode = 2;
 	SettingsManager::setSetting( "hudDrawMode", gui_hud_mode );
 
-    gui_fov_scale = SettingsManager::getFloatSetting( "fovDefault", 1.25f );
+    gui_fov_scale = 1.0f;
+    //gui_fov_scale = SettingsManager::getFloatSetting( "fovDefault", 1.25f );
     if( ! gui_fov_scale || gui_fov_scale < 1 )
 		gui_fov_scale = 1.0f;
     else if ( gui_fov_scale > 6 )
 		gui_fov_scale = 6.0f;
-	SettingsManager::setSetting( "fovDefault", gui_fov_scale );
+	//SettingsManager::setSetting( "fovDefault", gui_fov_scale );
 	SettingsManager::setSetting( "fovScale", gui_fov_scale );
 
-    gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovMax", 3.0f );
+    gui_fov_preferred_max_scale = SettingsManager::getFloatSetting( "fovMax", 2.25f );
     if( ! gui_fov_preferred_max_scale || gui_fov_preferred_max_scale < 1 )
 		gui_fov_preferred_max_scale = 1.0f;
 	else if ( gui_fov_preferred_max_scale > 6 )
@@ -317,7 +322,7 @@ const char *getLinuxAppName() {
 
 
 const char *getFontTGAFileName() {
-    return "font_32_64.tga";
+    return "newfont_32_64.tga";
     }
 
 
@@ -460,7 +465,8 @@ void initDrawString( int inWidth, int inHeight ) {
     toggleMipMapMinFilter( true );
     toggleTransparentCropping( true );
     
-    mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
+    //mainFont = new Font( getFontTGAFileName(), 6, 16, false, 16 );
+    mainFont = new Font( getFontTGAFileName(), 3, 6, false, 16 );
     mainFont->setMinimumPositionPrecision( 1 );
 
     setViewCenterPosition( lastScreenViewCenter.x, lastScreenViewCenter.y );
@@ -878,6 +884,60 @@ static void drawPauseScreen() {
         drawPos = add( drawPos, lastScreenViewCenter );
 
         drawSprite( instructionsSprite, drawPos, gui_fov_scale );
+
+        TextAlignment a = getMessageAlign();
+
+
+
+        drawPos = lastScreenViewCenter;
+        
+        drawPos.x -= 600 * gui_fov_scale;
+        drawPos.y += 320 * gui_fov_scale;
+        
+
+        doublePair rectPos = drawPos;
+        rectPos.x += 155 * gui_fov_scale;
+        rectPos.y -= 320 * gui_fov_scale;
+        
+        setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+        drawRect( rectPos, 182 * gui_fov_scale, 362 * gui_fov_scale );
+
+        setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+
+        drawRect( rectPos, 170 * gui_fov_scale, 350 * gui_fov_scale  );
+
+        
+        setMessageAlign( alignLeft );
+        drawMessage( translate( "commandHintsA" ), drawPos, false, 
+                     pauseScreenFade );
+
+
+
+        drawPos = lastScreenViewCenter;
+        
+        drawPos.x += 285 * gui_fov_scale;
+        drawPos.y += 320 * gui_fov_scale;
+        
+
+        rectPos = drawPos;
+        rectPos.x += 160 * gui_fov_scale;
+        rectPos.y -= 320 * gui_fov_scale;
+        
+        setDrawColor( 1, 1, 1, 0.5 * pauseScreenFade );
+        
+        drawRect( rectPos, 187 * gui_fov_scale, 362 * gui_fov_scale );
+
+        setDrawColor( 0.2, 0.2, 0.2, 0.85 * pauseScreenFade  );
+
+        drawRect( rectPos, 175 * gui_fov_scale, 350 * gui_fov_scale  );
+
+        
+        setMessageAlign( alignLeft );
+        drawMessage( translate( "commandHintsB" ), drawPos, false, 
+                     pauseScreenFade );
+        
+        setMessageAlign( a );
         }
     
 

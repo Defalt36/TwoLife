@@ -53,6 +53,8 @@ static SimpleVector<int> deathMarkerObjectIDs;
 // (marked with fromDeath in description)
 static SimpleVector<int> allPossibleDeathMarkerIDs;
 
+static SimpleVector<int> allPossibleFoodIDs;
+
 
 static SimpleVector<TapoutRecord> tapoutRecords;
 
@@ -78,8 +80,6 @@ int getNumGlobalTriggers() {
 int getMetaTriggerObject( int inTriggerIndex ) {
     return globalTriggers.getElementDirect( inTriggerIndex ).onTriggerID;
     }
-
-
 
 
 
@@ -174,6 +174,62 @@ static void rebuildRaceList() {
 
 
 static JenkinsRandomSource randSource;
+
+
+// Used in hue shifting objects, animaionts and ground sprites
+// when the character is tripping
+static bool isTrippingEffectOn;
+
+void setObjectBankTrippingEffect( bool isTripping ) {
+    isTrippingEffectOn = isTripping;
+    }
+
+void setTrippingColor( double x, double y ) {
+	
+	// Nothing fancy, just wanna map the screen x, y into [0, 1]
+	// So hue change is continuous across the screen
+	double factor = (int)(abs(x + 2 * y) / 3 / 128) % 10;
+	factor /= 10;
+	
+	double curTime = Time::getCurrentTime();
+	
+	// Time between each color change
+	int period = 2; 
+	
+	int t1 = (int)curTime;
+	int t_progress = (int)t1 % period;
+	if( t_progress != 0 ) t1 -= t_progress;
+	int t2 = t1 + period;
+	
+	randSource.reseed( t1 );
+	double r1 = randSource.getRandomBoundedDouble( 0, 1 );
+	double g1 = randSource.getRandomBoundedDouble( 0, 1 );
+	double b1 = randSource.getRandomBoundedDouble( 0, 1 );
+	r1 = (1 + factor) * (1 + r1);
+	g1 = (1 + factor) * (1 + g1);
+	b1 = (1 + factor) * (1 + b1);
+	r1 = r1 - (int)r1;
+	g1 = g1 - (int)g1;
+	b1 = b1 - (int)b1;
+	
+	randSource.reseed( t2 );
+	double r2 = randSource.getRandomBoundedDouble( 0, 1 );
+	double g2 = randSource.getRandomBoundedDouble( 0, 1 );
+	double b2 = randSource.getRandomBoundedDouble( 0, 1 );
+	r2 = (1 + factor) * (1 + r2);
+	g2 = (1 + factor) * (1 + g2);
+	b2 = (1 + factor) * (1 + b2);
+	r2 = r2 - (int)r2;
+	g2 = g2 - (int)g2;
+	b2 = b2 - (int)b2;
+
+	// Colors fade from one period to the next
+	double r = (r2 - r1) * (curTime - t1) / period + r1;
+	double g = (g2 - g1) * (curTime - t1) / period + g1;
+	double b = (b2 - b1) * (curTime - t1) / period + b1;
+	setDrawColor( r, g, b, 1 );
+	
+	}
 
 
 static ClothingSet emptyClothing = { NULL, NULL, NULL, NULL, NULL, NULL };
@@ -678,6 +734,7 @@ static void setupNoBackAccess( ObjectRecord *inR ) {
     }
 
 
+
 static void setupBlocksMoving( ObjectRecord *inR ) {
     inR->blocksMoving = false;
     
@@ -690,6 +747,18 @@ static void setupBlocksMoving( ObjectRecord *inR ) {
 
     if( pos != NULL ) {
         inR->blocksMoving = true;
+        }
+    }
+
+
+static void setupAlcohol( ObjectRecord *inR ) {
+    inR->alcohol = 0;
+
+    char *pos = strstr( inR->description, "+alcohol" );
+
+    if( pos != NULL ) {
+        
+        sscanf( pos, "+alcohol%d", &( inR->alcohol ) );
         }
     }
 
@@ -765,7 +834,11 @@ float initObjectBankStep() {
                 setupAutoDefaultTrans( r );
                 
                 setupNoBackAccess( r );                
-                
+
+
+                setupAlcohol( r );
+
+
                 // do this later, after we parse floorHugging
                 // setupWall( r );
                 
@@ -1022,7 +1095,11 @@ float initObjectBankStep() {
                             
                 sscanf( lines[next], "foodValue=%d", 
                         &( r->foodValue ) );
-                            
+                
+                if( r->foodValue > 0 ) {
+                    allPossibleFoodIDs.push_back( r->id );
+                    }
+
                 next++;
                             
                             
@@ -1178,6 +1255,20 @@ float initObjectBankStep() {
                             &( flagRead ) );
                     
                     r->slotsLocked = flagRead;
+                            
+                    next++;
+                    }
+                    
+                r->slotsNoSwap = 0;
+                if( strstr( lines[next], 
+                            "slotsNoSwap=" ) != NULL ) {
+                    // flag present
+                    
+                    int flagRead = 0;                            
+                    sscanf( lines[next], "slotsNoSwap=%d", 
+                            &( flagRead ) );
+                    
+                    r->slotsNoSwap = flagRead;
                             
                     next++;
                     }
@@ -2295,7 +2386,8 @@ static void freeObjectRecord( int inID ) {
             monumentCallObjectIDs.deleteElementEqualTo( inID );
             deathMarkerObjectIDs.deleteElementEqualTo( inID );
             allPossibleDeathMarkerIDs.deleteElementEqualTo( inID );
-            
+            allPossibleFoodIDs.deleteElementEqualTo( inID );
+
             if( race <= MAX_RACE ) {
                 racePersonObjectIDs[ race ].deleteElementEqualTo( inID );
                 }
@@ -2383,6 +2475,7 @@ void freeObjectBank() {
     monumentCallObjectIDs.deleteAll();
     deathMarkerObjectIDs.deleteAll();
     allPossibleDeathMarkerIDs.deleteAll();
+    allPossibleFoodIDs.deleteAll();
     
     for( int i=0; i<= MAX_RACE; i++ ) {
         racePersonObjectIDs[i].deleteAll();
@@ -2458,6 +2551,7 @@ int reAddObject( ObjectRecord *inObject,
                         inObject->slotParent,
                         inObject->slotTimeStretch,
                         inObject->slotsLocked,
+                        inObject->slotsNoSwap,
                         inObject->numSprites, 
                         inObject->sprites, 
                         inObject->spritePos,
@@ -2732,6 +2826,7 @@ int addObject( const char *inDescription,
                int *inSlotParent,
                float inSlotTimeStretch,
                char inSlotsLocked,
+               char inSlotsNoSwap,
                int inNumSprites, int *inSprites, 
                doublePair *inSpritePos,
                double *inSpriteRot,
@@ -2944,6 +3039,7 @@ int addObject( const char *inDescription,
                                       inNumSlots, inSlotTimeStretch ) );
         lines.push_back( autoSprintf( "slotSize=%f", inSlotSize ) );
         lines.push_back( autoSprintf( "slotsLocked=%d", (int)inSlotsLocked ) );
+        lines.push_back( autoSprintf( "slotsNoSwap=%d", (int)inSlotsNoSwap ) );
 
         for( int i=0; i<inNumSlots; i++ ) {
             lines.push_back( autoSprintf( "slotPos=%f,%f,vert=%d,parent=%d", 
@@ -3200,6 +3296,7 @@ int addObject( const char *inDescription,
     
     deathMarkerObjectIDs.deleteElementEqualTo( newID );
     allPossibleDeathMarkerIDs.deleteElementEqualTo( newID );
+    allPossibleFoodIDs.deleteElementEqualTo( newID );
     
     if( r->deathMarker ) {
         deathMarkerObjectIDs.push_back( newID );
@@ -3213,6 +3310,18 @@ int addObject( const char *inDescription,
     r->floor = inFloor;
     r->floorHugging = inFloorHugging;
     r->foodValue = inFoodValue;
+
+    
+    // do NOT add to food list
+    // addObject is only called for generated objects NOT loaded from disk 
+    // (use dummies, etc).
+    // Don't include them in list of foods
+    
+    // if( r->foodValue > 0 ) {
+    //    allPossibleFoodIDs.push_back( newID );
+    //    }
+
+    
     r->speedMult = inSpeedMult;
     r->heldOffset = inHeldOffset;
     r->clothing = inClothing;
@@ -3239,6 +3348,7 @@ int addObject( const char *inDescription,
     
     r->slotTimeStretch = inSlotTimeStretch;
     r->slotsLocked = inSlotsLocked;
+    r->slotsNoSwap = inSlotsNoSwap;
 
     r->numSprites = inNumSprites;
     
@@ -3337,6 +3447,8 @@ int addObject( const char *inDescription,
     setupAutoDefaultTrans( r );
 
     setupNoBackAccess( r );            
+
+    setupAlcohol( r );
 
     setupWall( r );
 
@@ -3821,6 +3933,10 @@ HoldingPos drawObject( ObjectRecord *inObject, int inDrawBehindSlots,
             if( additive ) {
                 toggleAdditiveBlend( true );
                 }
+				
+			if( !multiplicative ) {
+				if( isTrippingEffectOn ) setTrippingColor( pos.x, pos.y );
+				}
 
             drawSprite( getSprite( inObject->sprites[i] ), pos, inScale,
                         rot, 
@@ -4386,6 +4502,11 @@ SimpleVector<int> *getAllPossibleDeathIDs() {
     return &allPossibleDeathMarkerIDs;
     }
 
+
+
+SimpleVector<int> *getAllPossibleFoodIDs() {
+    return &allPossibleFoodIDs;
+    }
 
 
 
@@ -5444,6 +5565,11 @@ doublePair getObjectCenterOffset( ObjectRecord *inObject ) {
             // don't consider parts visible only when worn
             continue;
             }
+            
+		if( inObject->spriteColor[i].r < 1.0 && inObject->spriteColor[i].r > 0.998 ) {
+			// special flag to skip sprite when calculating position to draw object
+			continue;
+		}
         
 
         int w = sprite->visibleW;
@@ -5547,14 +5673,20 @@ doublePair getObjectBottomCenterOffset( ObjectRecord *inObject ) {
 		
 		doublePair centerOffset = { (double)sprite->centerXOffset,
 									(double)sprite->centerYOffset };
+                                    
+		doublePair centerAnchorOffset = { (double)sprite->centerAnchorXOffset,
+                                          (double)sprite->centerAnchorYOffset };
 			
 		centerOffset = rotate( centerOffset, 
+							   2 * M_PI * inObject->spriteRot[i] );
+                               
+		centerAnchorOffset = rotate( centerAnchorOffset, 
 							   2 * M_PI * inObject->spriteRot[i] );
 
 		doublePair spriteCenter = add( inObject->spritePos[i], 
 									   centerOffset );
 		
-		double y = spriteCenter.y - dimensions.y / 2 + sprite->centerAnchorYOffset;
+		double y = spriteCenter.y - abs(dimensions.y) / 2 + centerAnchorOffset.y;
 
         if( lowestRecord == NULL ||
             // lowest point of sprite is lower than what we've seen so far

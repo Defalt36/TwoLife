@@ -1,4 +1,5 @@
 #include "TextField.h"
+#include "DropdownList.h"
 
 #include <string.h>
 
@@ -299,7 +300,8 @@ void TextField::draw() {
     drawRect( - mWide / 2, - mHigh / 2, 
               mWide / 2, mHigh / 2 );
     
-    setDrawColor( 0.25, 0.25, 0.25, 1 );
+    // make the inside of the box yellow
+    setDrawColor( 1, 0.75, 0.2, 1 );
     double pixWidth = mCharWidth / 8;
 
 
@@ -467,6 +469,9 @@ void TextField::draw() {
     char cursorCentered = false;
     doublePair centerPos = { 0, 0 };
     
+    // make inside text always black 
+    setDrawColor( 0, 0, 0, 1 );
+    
     if( ! tooLongFront ) {
         mFont->drawString( mDrawnText, textPos, alignLeft );
         mDrawnTextX = textPos.x;
@@ -586,9 +591,12 @@ void TextField::draw() {
 
 
 void TextField::pointerUp( float inX, float inY ) {
-    if( mIgnoreMouse ) {
+    if( mIgnoreMouse || mIgnoreEvents ) {
         return;
         }
+        
+	int mouseButton = getLastMouseButton();
+	if ( mouseButton == MouseButton::WHEELUP || mouseButton == MouseButton::WHEELDOWN ) { return; }
     
     if( inX > - mWide / 2 &&
         inX < + mWide / 2 &&
@@ -797,6 +805,20 @@ void TextField::setIgnoreMouse( char inIgnore ) {
 double TextField::getRightEdgeX() {
     
     return mX + mWide / 2;
+    }
+
+
+
+double TextField::getLeftEdgeX() {
+    
+    return mX - mWide / 2;
+    }
+
+
+
+double TextField::getWidth() {
+    
+    return mWide;
     }
 
 
@@ -1138,6 +1160,8 @@ void TextField::focus() {
         // unfocus last focused
         sFocusedTextField->unfocus();
         }
+		
+	DropdownList::unfocusAll();
 
     mFocused = true;
     sFocusedTextField = this;

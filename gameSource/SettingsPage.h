@@ -5,6 +5,7 @@
 #include "RadioButtonSet.h"
 #include "ValueSlider.h"
 #include "SoundUsage.h"
+#include "DropdownList.h"
 
 
 #include "minorGems/ui/event/ActionListener.h"
@@ -38,6 +39,7 @@ class SettingsPage : public GamePage, public ActionListener {
         int mEnableNudeSetting;
         int mEnableFOVSetting;
         int mEnableKActionsSetting;
+        int mEnableCenterCameraSetting;
         
         SoundUsage mTestSound;
 
@@ -56,12 +58,13 @@ class SettingsPage : public GamePage, public ActionListener {
 		CheckboxButton mEnableNudeBox;
 		CheckboxButton mEnableFOVBox;
 		CheckboxButton mEnableKActionsBox;
+		CheckboxButton mEnableCenterCameraBox;
 
         ValueSlider mMusicLoudnessSlider;
         ValueSlider mSoundEffectsLoudnessSlider;
 
 
-        TextField mSpawnSeed;
+        DropdownList mSpawnSeed;
 
         RadioButtonSet *mCursorModeSet;
         

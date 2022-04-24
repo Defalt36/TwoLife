@@ -15,6 +15,8 @@
 #include "objectBank.h"
 #include "buttonStyle.h"
 
+#include "DropdownList.h"
+
 
 extern Font *mainFont;
 
@@ -32,6 +34,7 @@ SettingsPage::SettingsPage()
           mEnableNudeBox( -335, 148, 4 ),
 		  mEnableFOVBox( 561, 128, 3),
 		  mEnableKActionsBox( 561, 90, 3),
+		  mEnableCenterCameraBox( 561, 52, 3),
           mMusicLoudnessSlider( mainFont, 0, 40, 4, 200, 30,
                                 0.0, 1.0, 
                                 translate( "musicLoudness" ) ),
@@ -72,8 +75,8 @@ SettingsPage::SettingsPage()
     setButtonStyle( &mRestartButton );
     setButtonStyle( &mRedetectButton );
 
-	addComponent( &mInfoSeeds);
-	mInfoSeeds.addActionListener( this );
+	//addComponent( &mInfoSeeds );
+	//mInfoSeeds.addActionListener( this );
 
     addComponent( &mBackButton );
     mBackButton.addActionListener( this );
@@ -95,6 +98,9 @@ SettingsPage::SettingsPage()
 	
 	addComponent( &mEnableKActionsBox );
     mEnableKActionsBox.addActionListener( this );
+	
+	addComponent( &mEnableCenterCameraBox );
+    mEnableCenterCameraBox.addActionListener( this );
 
     addComponent( &mRestartButton );
     mRestartButton.addActionListener( this );
@@ -102,7 +108,7 @@ SettingsPage::SettingsPage()
     addComponent( &mRedetectButton );
     mRedetectButton.addActionListener( this );
 
-    addComponent( &mSpawnSeed);
+    //addComponent( &mSpawnSeed );
     
     mRestartButton.setVisible( false );
     
@@ -129,14 +135,19 @@ SettingsPage::SettingsPage()
     mEnableNudeBox.setToggled( mEnableNudeSetting );
 	
 	mEnableFOVSetting =
-        SettingsManager::getIntSetting( "fovEnabled", 1 );
+        SettingsManager::getIntSetting( "fovEnabled", 0 );
 	
 	mEnableFOVBox.setToggled( mEnableFOVSetting );
     
 	mEnableKActionsSetting =
-        SettingsManager::getIntSetting( "keyboardActions", 1 );
+        SettingsManager::getIntSetting( "keyboardActions", 0 );
 	
 	mEnableKActionsBox.setToggled( mEnableKActionsSetting );
+        
+	mEnableCenterCameraSetting =
+        SettingsManager::getIntSetting( "centerCamera", 0 );
+	
+	mEnableCenterCameraBox.setToggled( mEnableCenterCameraSetting );
     
 
     addComponent( &mMusicLoudnessSlider );
@@ -161,10 +172,10 @@ SettingsPage::~SettingsPage() {
 void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mBackButton ) {
         
-        char *seed = mSpawnSeed.getText();
+        char *seedList = mSpawnSeed.getAndUpdateList();
         
-        SettingsManager::setSetting( "spawnSeed", seed );
-        delete [] seed;
+        SettingsManager::setSetting( "spawnSeed", seedList );
+        delete [] seedList;
         
         setSignal( "back" );
         setMusicLoudness( 0 );
@@ -213,6 +224,11 @@ void SettingsPage::actionPerformed( GUIComponent *inTarget ) {
         int newSetting = mEnableKActionsBox.getToggled();
         
         SettingsManager::setSetting( "keyboardActions", newSetting );
+        }
+	else if( inTarget == &mEnableCenterCameraBox ) {
+        int newSetting = mEnableCenterCameraBox.getToggled();
+        
+        SettingsManager::setSetting( "centerCamera", newSetting );
         }
     else if( inTarget == &mRestartButton ||
              inTarget == &mRedetectButton ) {
@@ -373,6 +389,13 @@ void SettingsPage::draw( doublePair inViewCenter,
     pos.y -= 2;
 
     mainFont->drawString( "Keyboard Actions", pos, alignRight );
+	
+	pos = mEnableCenterCameraBox.getPosition();
+    
+    pos.x -= 30;
+    pos.y -= 2;
+
+    mainFont->drawString( "Center Camera", pos, alignRight );
 
 
     pos = mCursorModeSet->getPosition();
@@ -418,10 +441,10 @@ void SettingsPage::makeActive( char inFresh ) {
 
 
         char *seed = 
-            SettingsManager::getStringSetting( "spawnSeed",
+            SettingsManager::getSettingContents( "spawnSeed",
                                                "" );
         
-        mSpawnSeed.setText( seed );
+        mSpawnSeed.setList( seed );
         
         delete [] seed;
         

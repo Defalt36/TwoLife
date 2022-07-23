@@ -19041,7 +19041,26 @@ int main( int inNumArgs, const char **inArgs ) {
     // make backup and delete old backup every day
     AppLog::setLog( new FileLog( "log.txt", 86400 ) );
 
-    AppLog::setLoggingLevel( Log::DETAIL_LEVEL );
+    // Log::INFO_LEVEL = 4
+    // Log::DETAIL_LEVEL = 5
+    // Log::TRACE_LEVEL = 6
+    int logLevel = SettingsManager::getIntSetting( "logLevel", 4 );
+    
+    switch(logLevel) {
+        case 4:
+            logLevel = Log::INFO_LEVEL;
+            break;
+        case 5:
+            logLevel = Log::DETAIL_LEVEL;
+            break;
+        case 6:
+            logLevel = Log::TRACE_LEVEL;
+            break;
+        default:
+            logLevel = Log::INFO_LEVEL;
+        }
+
+    AppLog::setLoggingLevel( logLevel );
     AppLog::printAllMessages( true );
     
 
@@ -19590,6 +19609,24 @@ int main( int inNumArgs, const char **inArgs ) {
             shutdownMode = SettingsManager::getIntSetting( "shutdownMode", 0 );
             forceShutdownMode = 
                 SettingsManager::getIntSetting( "forceShutdownMode", 0 );
+
+            int logLevel = SettingsManager::getIntSetting( "logLevel", 4 );
+            
+            switch(logLevel) {
+                case 4:
+                    logLevel = Log::INFO_LEVEL;
+                    break;
+                case 5:
+                    logLevel = Log::DETAIL_LEVEL;
+                    break;
+                case 6:
+                    logLevel = Log::TRACE_LEVEL;
+                    break;
+                default:
+                    logLevel = Log::INFO_LEVEL;
+                }
+
+            AppLog::setLoggingLevel( logLevel );
             
             if( checkReadOnly() ) {
                 // read-only file system causes all kinds of weird 
@@ -29785,7 +29822,7 @@ int main( int inNumArgs, const char **inArgs ) {
             
             char *updateListString = updateList.getElementString();
             
-            AppLog::infoF( "Need to send updates about these %d players: %s",
+            AppLog::detailF( "Need to send updates about these %d players: %s",
                            playerIndicesToSendUpdatesAbout.size(),
                            updateListString );
             delete [] updateListString;
@@ -30073,7 +30110,7 @@ int main( int inNumArgs, const char **inArgs ) {
             
             char *updateListString = trueUpdateList.getElementString();
             
-            AppLog::infoF( "Sending updates about these %d players: %s",
+            AppLog::detailF( "Sending updates about these %d players: %s",
                            newUpdatePlayerIDs.size(),
                            updateListString );
             delete [] updateListString;
@@ -32703,7 +32740,7 @@ int main( int inNumArgs, const char **inArgs ) {
             
             char *playerListString = playerList.getElementString();
 
-            AppLog::infoF( "%d/%d players were sent part of a %d-line PU: %s",
+            AppLog::detailF( "%d/%d players were sent part of a %d-line PU: %s",
                            playersReceivingPlayerUpdate.size(),
                            numLive, newUpdates.size(),
                            playerListString );

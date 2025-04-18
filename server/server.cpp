@@ -8173,23 +8173,6 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         }
     
-    if ( SettingsManager::getIntSetting( "randomisePlayersObject", 0 ) ) {
-        SimpleVector<int> *objectsPool =
-            SettingsManager::getIntSettingMulti( "randomisePlayersObjectPool" );
-        ObjectRecord *randomObject;
-        int randomObjectIndex;
-        int objectPoolSize = objectsPool->size();
-        while ( randomObject == NULL ) {
-            if( objectPoolSize > 0 ) {
-                randomObjectIndex = randSource.getRandomBoundedInt( 0, objectPoolSize - 1 );
-                randomObject = getObject( objectsPool->getElementDirect( randomObjectIndex ) );
-                }
-            else {
-                randomObject = getObject( randSource.getRandomBoundedInt( 0, getMaxObjectID() ) );
-                }
-            }
-        inForceDisplayID = randomObject->id;
-        }    
 
     if( inForceDisplayID != -1 ) {
         newObject.displayID = inForceDisplayID;
@@ -8215,6 +8198,26 @@ int processLoggedInPlayer( char inAllowReconnect,
     if( parent == NULL ) {
         // Eve
         int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
+        int shouldRandomiseDisplayID = SettingsManager::getIntSetting( "randomisePlayersObject", 0 );
+        
+        if ( !forceID && shouldRandomiseDisplayID ) {
+            SimpleVector<int> *objectsPool =
+                SettingsManager::getIntSettingMulti( "randomisePlayersObjectPool" );
+            ObjectRecord *randomObject;
+            int randomObjectIndex;
+            int randomObjectID = 0;
+            int objectPoolSize = objectsPool->size();
+            while ( randomObjectID == NULL ) {
+                if( objectPoolSize > 0 ) {
+                    randomObjectIndex = randSource.getRandomBoundedInt( 0, objectPoolSize - 1 );
+                    randomObjectID = objectsPool->getElementDirect( randomObjectIndex );
+                    }
+                else {
+                    randomObjectID = randSource.getRandomBoundedInt( 0, getMaxObjectID() );
+                    }
+                }
+            forceID = randomObjectID;
+            }
     
         if( forceID > 0 ) {
             newObject.displayID = forceID;

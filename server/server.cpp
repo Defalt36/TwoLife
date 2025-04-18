@@ -8194,9 +8194,14 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
 
+    newObject.holdingID = 0;
     
     if( parent == NULL ) {
         // Eve
+        
+        // new eve spawns holding this
+        newObject.holdingID = SettingsManager::getIntSetting( "defaultEveObject", 0 );
+        
         int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
         int shouldRandomiseDisplayID = SettingsManager::getIntSetting( "randomisePlayersObject", 0 );
         
@@ -8233,7 +8238,6 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
 
-    newObject.holdingID = 0;
 
 
     if( areTriggersEnabled() ) {

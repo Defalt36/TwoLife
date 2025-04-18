@@ -923,6 +923,8 @@ typedef struct LiveObject {
         timeSec_t birthCoolDown;
         
         bool declaredInfertile;
+        
+        bool immortal;
 
         timeSec_t lastRegionLookTime;
         
@@ -8388,6 +8390,8 @@ int processLoggedInPlayer( char inAllowReconnect,
     newObject.birthCoolDown = 0;
     newObject.declaredInfertile = false;
     
+    newObject.immortal = false;
+    
     newObject.monumentPosSet = false;
     newObject.monumentPosSent = true;
     
@@ -12349,6 +12353,13 @@ void executeKillAction( int inKillerIndex,
                     }
                 }
             }
+        }
+    if ( hitPlayer->immortal ) {
+        // player is immortal, just heal him
+        hitPlayer->holdingID = 0;
+        setNoLongerDying( 
+            hitPlayer,
+            playerIndicesToSendDyingAbout );
         }
     }
 

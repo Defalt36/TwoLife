@@ -946,6 +946,8 @@ typedef struct LiveObject {
         timeSec_t birthCoolDown;
         
         bool declaredInfertile;
+        
+        bool unkillable;
 
         timeSec_t lastRegionLookTime;
         
@@ -8373,14 +8375,18 @@ int processLoggedInPlayer( char inAllowReconnect,
     
 
     
-    // Spawns player holding nothing
+    // Default settings that can be different for Eves
     newObject.holdingID = 0;
+    newObject.unkillable = false;
     
     if( parent == NULL ) {
         // Eve
         
         // new eve spawns holding this
         newObject.holdingID = SettingsManager::getIntSetting( "defaultHoldingObject", 0 );
+        
+        // new eve heal as attacked
+        newObject.unkillable = SettingsManager::getIntSetting( "makeEveUnkillable", 0 );
         
         int forceID = SettingsManager::getIntSetting( "forceEveObject", 0 );
     
@@ -12535,6 +12541,13 @@ void executeKillAction( int inKillerIndex,
                     }
                 }
             }
+        }
+    if ( hitPlayer->unkillable ) {
+        // player is unkillable, just heal him
+        hitPlayer->holdingID = 0;
+        setNoLongerDying( 
+            hitPlayer,
+            playerIndicesToSendDyingAbout );
         }
     }
 

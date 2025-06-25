@@ -8336,23 +8336,6 @@ int processLoggedInPlayer( char inAllowReconnect,
             }
         }
     
-    if ( SettingsManager::getIntSetting( "randomisePlayersObject", 0 ) ) {
-        SimpleVector<int> *objectsPool =
-            SettingsManager::getIntSettingMulti( "randomisePlayersObjectPool" );
-        ObjectRecord *randomObject;
-        int randomObjectIndex;
-        int objectPoolSize = objectsPool->size();
-        while ( randomObject == NULL ) {
-            if( objectPoolSize > 0 ) {
-                randomObjectIndex = randSource.getRandomBoundedInt( 0, objectPoolSize - 1 );
-                randomObject = getObject( objectsPool->getElementDirect( randomObjectIndex ) );
-                }
-            else {
-                randomObject = getObject( randSource.getRandomBoundedInt( 0, getMaxObjectID() ) );
-                }
-            }
-        inForceDisplayID = randomObject->id;
-        }    
 
     if( inForceDisplayID != -1 ) {
         newObject.displayID = inForceDisplayID;
@@ -8374,6 +8357,27 @@ int processLoggedInPlayer( char inAllowReconnect,
         }
     
 
+    // Settings to randomise the player display object
+    // forceEveObject overrides randomisePlayerObject
+    int shouldRandomiseDisplayID = SettingsManager::getIntSetting( "randomisePlayerObject", 0 );
+    if ( shouldRandomiseDisplayID ) {
+        SimpleVector<int> *objectsPool =
+            SettingsManager::getIntSettingMulti( "randomisePlayerObjectPool" );
+        ObjectRecord *randomObject = NULL;
+        int objectPoolIndex;
+        int objectPoolSize = objectsPool->size();
+        while ( randomObject == NULL ) {
+            // if the first object ID on the list is 0 then use the whole object list
+            if ( objectPoolSize <= 0 || ! objectsPool->getElementDirect( 0 ) ) {
+                randomObject = getObject( randSource.getRandomBoundedInt( 0, getMaxObjectID() ) );
+                }
+            else {
+                objectPoolIndex = randSource.getRandomBoundedInt( 0, objectPoolSize - 1 );
+                randomObject = getObject( objectsPool->getElementDirect( objectPoolIndex ) );
+                }
+            }
+        newObject.displayID = randomObject->id;
+        }
     
     // Default settings that can be different for Eves
     newObject.holdingID = 0;

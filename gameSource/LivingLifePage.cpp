@@ -6863,20 +6863,38 @@ void LivingLifePage::draw( doublePair inViewCenter,
 			int worldY = y + mMapOffsetY - mMapD / 2;
 			for( int x=xStart; x<=xEnd; x++ ) {
 				int worldX = x + mMapOffsetX - mMapD / 2;
-				float darkness = DayLight(time_current, night_frequency);
-				ColorInfo c = getDrawSpecifics(worldX, worldY, darkness, game_time);
-				if (c.additive) {
-					toggleAdditiveBlend( true );
-					setDrawColor( c.r, c.g, c.b, c.a );
-					toggleAdditiveBlend( false );
-				}
-				else {
-					setDrawColor( c.r, c.g, c.b, c.a );
-				}
 				doublePair pos;
-				pos.x = worldX * CELL_D;
-				pos.y = worldY * CELL_D;
-				drawSquare( pos, CELL_D * .5 );
+                int subDivisions = 1;
+                float subSize = CELL_D / subDivisions;
+
+                // shift origin from centre → top-left
+                float startX = worldX * CELL_D - CELL_D * 0.5f;
+                float startY = worldY * CELL_D + CELL_D * 0.5f;
+
+                for (int n = 0; n < subDivisions * subDivisions; n++) {
+                    int col = n % subDivisions;
+                    int row = n / subDivisions;
+
+                    pos.x = startX + subSize * col + subSize * 0.5f;
+                    pos.y = startY - subSize * row - subSize * 0.5f;
+
+                    // convert position back to world-space grid coords
+                    float subWorldX = pos.x / CELL_D;
+                    float subWorldY = pos.y / CELL_D;
+
+                    float darkness = DayLight(time_current, night_frequency);
+                    ColorInfo c = getDrawSpecifics(subWorldX, subWorldY, darkness, game_time);
+
+                    if (c.additive) {
+                        toggleAdditiveBlend(true);
+                        setDrawColor(c.r, c.g, c.b, c.a);
+                        toggleAdditiveBlend(false);
+                    } else {
+                        setDrawColor(c.r, c.g, c.b, c.a);
+                    }
+
+                    drawSquare(pos, subSize * 0.5f);
+                }
 			}
 		}
 	}

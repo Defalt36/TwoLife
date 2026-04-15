@@ -48,16 +48,14 @@ float DayLight(int time_current, int night_frequency) {
 	return current_darkness;
 }
 
-float distance(int ux, int uy, int vx, int vy) {
+float distance(float ux, float uy, float vx, float vy) {
+    //simple equation for distance of two points in the cartesian plane
+    float dif_x = ux - vx;
+    float dif_y = uy - vy;
 
-	//simple equation for distance of two points in the cartesian plane
-	int dif_x = ux - vx;
-	int dif_y = uy - vy;
+    float squared_difs = dif_x * dif_x + dif_y * dif_y;
 
-	int squared_difs = dif_x * dif_x + dif_y * dif_y;
-
-	float distance = sqrt(squared_difs);
-	return distance;
+    return sqrtf(squared_difs);
 }
 
 bool checkLightCollision( float a, float b, float c, float radius ) {
@@ -97,9 +95,9 @@ bool checkLightCollision( float a, float b, float c, float radius ) {
 	}
 }
 
-ColorInfo getDrawSpecifics(int cellX, int cellY, float darkness, int time) {
+ColorInfo getDrawSpecifics(float posX, float posY, float darkness, int time) {
 	int lux, shadow;
-	getIlluminationLevel(cellX, cellY, &lux, &shadow);
+	getIlluminationLevel(posX, posY, &lux, &shadow);
 	
 	ColorInfo c;
 	c.r = 0;
@@ -150,14 +148,11 @@ ColorInfo getDrawSpecifics(int cellX, int cellY, float darkness, int time) {
 	return c;
 }
 
-void getIlluminationLevel(int cellX, int cellY, int *lux, int *shadow) {
+void getIlluminationLevel(float posX, float posY, int *lux, int *shadow) {
 	SimpleVector<LightSource> allLightSources;
 	allLightSources.push_back_other(&mapLightSources);
 	allLightSources.push_back_other(&heldLightSources);
 
-	int cX = cellX;
-	int cY = cellY;
-	
 	int lightValue = 0;
 	int numOfBlockers = 0;
 	for (int i = 0; i < allLightSources.size(); i++) {
@@ -167,7 +162,7 @@ void getIlluminationLevel(int cellX, int cellY, int *lux, int *shadow) {
 		int sX = source.x;
 		int sY = source.y;
 
-		float dist_source = distance(sX, sY, cX, cY);
+		float dist_source = distance(sX, sY, posX, posY);
 		float light_intensity = source.value - light_decrease;
 		
 		if (dist_source <= light_intensity) {
@@ -195,7 +190,7 @@ void getIlluminationLevel(int cellX, int cellY, int *lux, int *shadow) {
 			int bX = blocker.x;
 			int bY = blocker.y;
 			
-			float dist_blocker = distance(bX, bY, cX, cY);
+			float dist_blocker = distance(bX, bY, posX, posY);
 			float dist_cross = distance(sX, sY, bX, bY);
 			
 			bool isBlocked = false;

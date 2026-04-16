@@ -10095,10 +10095,20 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         speechPos.x -= width / 2;
 
-        
-        drawChalkBackgroundString( speechPos, o->currentSpeech, 
-                                   o->speechFade, widthLimit,
-                                   o );
+        FloatColor c;
+        sscanf(SettingsManager::getStringSetting("testColor"), "%f,%f,%f", &c.r, &c.g, &c.b);
+        c.a = 1.0f;
+
+        if ( o->currentSpeech[0] == ':' ) {
+            drawChalkBackgroundString( speechPos, o->currentSpeech, 
+                                       o->speechFade, widthLimit,
+                                       o, -1, &c );
+            }
+        else {
+            drawChalkBackgroundString( speechPos, o->currentSpeech, 
+                                       o->speechFade, widthLimit,
+                                       o );
+            }
         }
 
 
@@ -10136,7 +10146,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         speechPos.x -= width / 2;
         
         drawChalkBackgroundString( speechPos, ls->speech, 
-                                   ls->fade, widthLimit );
+                                   ls->fade, widthLimit, NULL, -1, new FloatColor({1, 1, 1, 1}) );
         }
     
 

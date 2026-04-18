@@ -1,1 +1,0 @@
-rsync -avz -e ssh --progress ~/private_html/* jcr13@publicdata.onehouronelife.com:public_html/

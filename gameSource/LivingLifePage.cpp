@@ -10095,8 +10095,49 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         speechPos.x -= width / 2;
 
+
+        std::string displayedSaidPhrase = o->currentSpeech;
+
+        // might be better to move this to a global variable, SettingsManager calls are a bit slow
+        char *settingsContent = SettingsManager::getSettingContents( "censoredWordsAndPhrases", "" );       
+        if( strcmp( settingsContent, "" ) != 0 ) {
+            int numLines;
+            char **censoredWords = split( settingsContent, "\n", &numLines );
+            
+            for( int i=0; i<numLines; i++ ) {
+                size_t start_pos = 0;
+                int wordLength = strlen( censoredWords[i] );
+                if ( wordLength != 0 ) {
+                    // replace all censored words with a corresponding number of asterisks
+                    //std::string asterisks = std::string( wordLength, '*' );
+                    
+                    // use random symbols to replace censored words
+                    std::string symbols = "!@#$%&*";
+                    std::string grawlix = "";
+                    for( int j = 0; j < wordLength; j++ ) {
+                        const char currentLetter = censoredWords[i][j];
+                        if ( currentLetter != ' ' ) {
+                            grawlix += symbols[ currentLetter % symbols.size() ];
+                            }
+                        else {
+                            grawlix += ' ';
+                            }
+                        }
+                    
+                    // replace all occurences of censored words
+                    while( ( start_pos = displayedSaidPhrase.find( stringToUpperCase( censoredWords[i] ), start_pos ) ) != std::string::npos ) {
+                        displayedSaidPhrase.replace(start_pos, wordLength, grawlix);
+                        start_pos += wordLength;
+                        }
+                    }
+                delete [] censoredWords[i];
+                }
+            delete [] censoredWords;
+            }
+        delete [] settingsContent;
         
-        drawChalkBackgroundString( speechPos, o->currentSpeech, 
+        // o->currentSpeech replaced with displayedSaidPhrase for filtering censored words
+        drawChalkBackgroundString( speechPos, displayedSaidPhrase.c_str(),
                                    o->speechFade, widthLimit,
                                    o );
         }
